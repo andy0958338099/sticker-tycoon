@@ -1335,15 +1335,13 @@ async function handleImageMessage(replyToken, userId, messageId) {
 
       await safeReply(replyToken, {
         type: 'text',
-        text: '✅ 照片上傳成功！\n\n' +
-              '🚀 極速上架啟動中\n' +
-              '• 自動產出 3 組（共 54 張）\n' +
-              '• 全部完成後優惠回補 14 張（淨消耗 40 張）\n\n' +
-              '⏳ 請稍候，可輸入「查詢進度」查看狀態。',
+        text: '🚀 極速上架進行中...\n\n' +
+              'AI 正在為您自動選擇風格並生成 3 組貼圖，過程約需 10 分鐘。\n\n' +
+              '請稍候再點擊「我的貼圖」查看成果。',
         quickReply: {
           items: [
-            { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
-            { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } }
+            { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
+            { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } }
           ]
         }
       });

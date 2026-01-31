@@ -129,8 +129,9 @@ async function handleNaming(userId, name) {
     };
   }
 
-  // 儲存名稱並進入照片上傳階段
-  await updateConversationState(userId, ConversationStage.UPLOAD_PHOTO, { name });
+  // 儲存名稱並進入照片上傳階段（保留既有 temp_data，例如 mode=quick_launch）
+  const state = await getConversationState(userId);
+  await updateConversationState(userId, ConversationStage.UPLOAD_PHOTO, { ...state.temp_data, name });
 
   return {
     type: 'text',
