@@ -101,9 +101,21 @@ async function handlePhotoUpload(userId, photoResult) {
   // 進入繪畫風格選擇階段
   await updateConversationState(userId, ConversationStage.STYLING, tempData);
 
-  // 從資料庫讀取繪畫風格設定
-  const styles = await getActiveStyles();
-  return generateStyleSelectionFlexMessage(styles);
+  return {
+    type: 'text',
+    text: '✅ 照片上傳成功！\n\n' +
+          '🚀 極速上架\n' +
+          '• 自動幫你配好 3 組（共 54 張）\n' +
+          '• 全部完成後優惠回補 14 張（淨消耗 40 張）\n\n' +
+          '請點選下方按鈕開始：',
+    quickReply: {
+      items: [
+        { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
+        { type: 'action', action: { type: 'message', label: '🎨 繼續手動流程', text: '繼續手動流程' } },
+        { type: 'action', action: { type: 'message', label: '❌ 取消', text: '取消' } }
+      ]
+    }
+  };
 }
 
 /**

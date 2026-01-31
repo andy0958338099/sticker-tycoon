@@ -611,16 +611,20 @@ async function handleCreationFlow(replyToken, userId, text, stage, state) {
       message = await handleNaming(userId, text);
       break;
     case ConversationStage.STYLING:
-      // 處理風格選擇（可能是按鈕點擊 "繪畫風格:xxx" 或直接輸入）
-      if (text.startsWith('繪畫風格:')) {
+      if (text === '繼續手動流程') {
+        const styles = await getActiveStyles();
+        message = generateStyleSelectionFlexMessage(styles);
+      } else if (text.startsWith('繪畫風格:')) {
         const styleId = text.replace('繪畫風格:', '');
         message = await handleStyleSelection(userId, styleId);
       } else {
         message = { 
           type: 'text', 
-          text: '⚠️ 請點擊上方按鈕選擇風格！',
+          text: '⚠️ 請點擊下方按鈕選擇一個方案！',
           quickReply: {
             items: [
+              { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
+              { type: 'action', action: { type: 'message', label: '🎨 繼續手動流程', text: '繼續手動流程' } },
               { type: 'action', action: { type: 'message', label: '❌ 取消', text: '取消' } }
             ]
           }
