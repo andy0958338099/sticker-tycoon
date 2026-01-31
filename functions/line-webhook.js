@@ -8,13 +8,184 @@ const axios = require('axios');
 const { supabase, isReplyTokenUsed, recordReplyToken, getOrCreateUser, getUserStickerSets, getUserLatestTask, getUserPendingTasks, getStickerSet, getStickerImages, deleteStickerSet, addToUploadQueue, removeFromUploadQueue, getUploadQueue, clearUploadQueue, getUserTokenBalance, getTokenTransactions, getUserReferralInfo, applyReferralCode, deductTokens, addTokens } = require('./supabase-client');
 const { ConversationStage, getConversationState, updateConversationState, resetConversationState, isInCreationFlow } = require('./conversation-state');
 const { handleCouponRedeemFlow } = require('./handlers/coupon-redeem-handler');
+const { getActiveStyles } = require('./handlers/messages/style-settings-messages');
+const { loadExpressionTemplateSettings, loadSceneSettings, loadFramingSettings } = require('./style-settings-loader');
 const { generateWelcomeFlexMessage, generateTutorialPart1FlexMessage, generateTutorialPart2FlexMessage, generateTutorialPart3FlexMessage, shouldShowTutorial, markTutorialShown, generateCouponRedeemPromptFlexMessage } = require('./sticker-flex-message');
 const { scheduleProfileUpdate } = require('./utils/profile-updater');
 const { globalMonitor } = require('./utils/performance-monitor');
 const { handleStartCreate, handleNaming, handleStyleSelection, handleFramingSelection, handleCharacterDescription, handleExpressionTemplate, handleSceneSelection, handleCustomScene, handleCountSelection, handlePhotoUpload } = require('./handlers/create-handler');
+
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function pickRandomIdFromRecord(record) {
+  const keys = Object.keys(record || {});
+  if (keys.length === 0) return null;
+  const idx = Math.floor(Math.random() * keys.length);
+  return keys[idx];
+}
+
+function pickRandomFromArray(items) {
+  const list = Array.isArray(items) ? items.filter(Boolean) : [];
+  if (list.length === 0) return null;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+async function handleQuickLaunch(replyToken, userId, state) {
+  // 防連點（最佳努力）
+  const QUICK_LAUNCH_LOCK_TTL_MS = 30_000;
+  if (!global.__quickLaunchLock) {
+    global.__quickLaunchLock = new Map();
+  }
+
+  const lock = global.__quickLaunchLock.get(userId);
+  const now = Date.now();
+  if (lock && lock.expiresAtMs > now) {
+    return getLineClient().replyMessage(replyToken, {
+      type: 'text',
+      text: '⏳ 已收到你的「極速上架」請求，正在處理中，請不要重複點擊\n\n📋 你可以輸入「查詢進度」查看狀態',
+      quickReply: {
+        items: [
+          { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
+          { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } }
+        ]
+      }
+    });
+  }
+
+  global.__quickLaunchLock.set(userId, { expiresAtMs: now + QUICK_LAUNCH_LOCK_TTL_MS });
+
+  try {
+    const tempData = state?.temp_data || {};
+    const hasPhoto = tempData.photoBase64 || tempData.photoUrl;
+
+    if (!hasPhoto) {
+      return getLineClient().replyMessage(replyToken, {
+        type: 'text',
+        text: '⚠️ 要使用「極速上架」，請先走一次「創建貼圖」上傳照片（上傳完成後再輸入「極速上架」即可）。',
+        quickReply: {
+          items: [
+            { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
+            { type: 'action', action: { type: 'message', label: '❌ 取消', text: '取消' } }
+          ]
+        }
+      });
+    }
+
+    // 同時只能有一個 pending/processing，避免跟既有 unique index 衝突
+    const pendingTasks = await getUserPendingTasks(userId);
+    if (pendingTasks.length > 0) {
+      const task = pendingTasks[0];
+      return getLineClient().replyMessage(replyToken, {
+        type: 'text',
+        text: '⚠️ 你目前已有任務正在生成中，請等待完成後再使用「極速上架」\n\n' +
+              `📛 名稱：${task.sticker_set?.name || '處理中'}\n` +
+              `📊 進度：${task.progress || 0}%`,
+        quickReply: {
+          items: [
+            { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
+            { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } }
+          ]
+        }
+      });
+    }
+
+    const totalCount = 18 * 3;
+    const refundTokens = 14;
+    const netCost = totalCount - refundTokens;
+
+    // 先預檢餘額是否 >= 54（避免做到一半才不足）
+    const tokenBalance = await getUserTokenBalance(userId);
+    if (tokenBalance < totalCount) {
+      return getLineClient().replyMessage(replyToken, {
+        type: 'text',
+        text: `❌ 張數不足，無法使用「極速上架」\n\n需要 ${totalCount} 張（完成後回補 ${refundTokens}，淨消耗 ${netCost}）\n目前餘額 ${tokenBalance} 張`,
+        quickReply: {
+          items: [
+            { type: 'action', action: { type: 'message', label: '💰 購買張數', text: '購買張數' } },
+            { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } }
+          ]
+        }
+      });
+    }
+
+    const groupKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    // 隨機挑選參數（每一組都重新隨機一次）改為：建立 1 個 master 任務，交給 worker 依序跑 3 組
+    const masterSetData = {
+      name: '極速上架',
+      style: 'quick_launch_master',
+      character: '',
+      count: 0,
+      photoUrl: tempData.photoUrl,
+      photoBase64: tempData.photoBase64,
+      expressions: [],
+      scene: 'none',
+      sceneConfig: null,
+      customSceneDescription: null,
+      framing: 'halfbody',
+      tokensDeducted: false,
+      tokenCost: 0,
+      promotion: JSON.stringify({
+        id: 'quick_launch_v1',
+        groupKey,
+        totalSets: 3,
+        setSize: 18,
+        refundTokens,
+        netCost
+      })
+    };
+
+    // 先回覆（避免後續建立任務/觸發 worker 太久導致 reply 超時）
+    await getLineClient().replyMessage(replyToken, {
+      type: 'text',
+      text: '🚀 已啟動「極速上架」\n\n' +
+            `📦 將依序生成 3 組資料夾（每組 18 張，共 ${totalCount} 張）\n` +
+            `🎁 全部完成後回補 ${refundTokens} 張（淨消耗 ${netCost}）\n\n` +
+            '⏳ 生成中可輸入「查詢進度」查看狀態',
+      quickReply: {
+        items: [
+          { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
+          { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } }
+        ]
+      }
+    });
+
+    const { taskId, setId } = await createGenerationTask(userId, {
+      ...masterSetData,
+      taskType: 'quick_launch'
+    });
+
+    const workerUrl = `${process.env.URL || 'https://sticker-tycoon.netlify.app'}/.netlify/functions/sticker-generator-worker-background`;
+    fetch(workerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId, setId, userId })
+    }).then(res => {
+      console.log(`📡 QuickLaunch Worker 回應狀態: ${res.status}`);
+    }).catch(err => {
+      console.error('❌ QuickLaunch Worker 調用失敗:', err.message);
+    });
+
+    await resetConversationState(userId);
+    return;
+  } catch (error) {
+    console.error('❌ 極速上架失敗:', error);
+    return;
+  } finally {
+    global.__quickLaunchLock.delete(userId);
+  }
+}
+
 const { handleUserPhoto } = require('./photo-handler');
 const { createGenerationTask } = require('./sticker-generator-worker-background');
-const { StickerStyles, SceneTemplates, FramingTemplates } = require('./sticker-styles');
+const { StickerStyles, SceneTemplates, FramingTemplates, DefaultExpressions } = require('./sticker-styles');
 const {
   checkAndHandleTimeout,
   handleCancelCommand,
@@ -205,6 +376,11 @@ async function handleTextMessage(replyToken, userId, text) {
     // 功能說明
     if (text === '功能說明' || text === '使用說明' || text === '教學' || text === '說明') {
       return await handleTutorial(replyToken, userId);
+    }
+
+    // 🚀 極速上架（優惠活動）：自動產出 3 組、每組 18 張
+    if (text === '極速上架') {
+      return await handleQuickLaunch(replyToken, userId, state);
     }
 
     // 功能說明第2部分

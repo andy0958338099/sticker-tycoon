@@ -4,7 +4,7 @@
  */
 
 const { v4: uuidv4 } = require('uuid');
-const { getSupabaseClient, updateStickerSetStatus, getStickerSet, deductTokens, getUserTokenBalance } = require('./supabase-client');
+const { getSupabaseClient, updateStickerSetStatus, getStickerSet, deductTokens, addTokens, getUserTokenBalance } = require('./supabase-client');
 const { generateStickerSet, generateStickerSetFromPhoto } = require('./ai-generator');
 const { generateStickersIntelligent } = require('./sticker-generator-enhanced');
 const { processStickerSet, generateMainImage, generateTabImage } = require('./image-processor');
@@ -53,7 +53,8 @@ async function createGenerationTask(userId, setData) {
         character_id: characterId,                  // 🆕 角色一致性 ID
         framing: setData.framing || 'halfbody',     // 構圖選擇（全身/半身/大頭/特寫）
         status: 'generating',
-        tokens_used: tokenCost  // ✅ 修正：記錄實際消耗的張數數（而非貼圖數量）
+        tokens_used: tokenCost,  // ✅ 修正：記錄實際消耗的張數數（而非貼圖數量）
+        promotion: setData.promotion || null
       }]);
 
     if (setError) throw setError;
@@ -65,7 +66,7 @@ async function createGenerationTask(userId, setData) {
         task_id: taskId,
         user_id: userId,
         set_id: setId,
-        task_type: 'create_set',
+        task_type: setData.taskType || 'create_set',
         status: 'pending',
         progress: 0
       }]);
@@ -120,6 +121,171 @@ async function updateTaskProgress(taskId, progress, status = 'processing') {
 /**
  * 執行貼圖生成
  */
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function pickRandomIdFromRecord(record) {
+  const keys = Object.keys(record || {});
+  if (keys.length === 0) return null;
+  const idx = Math.floor(Math.random() * keys.length);
+  return keys[idx];
+}
+
+function pickRandomFromArray(items) {
+  const list = Array.isArray(items) ? items.filter(Boolean) : [];
+  if (list.length === 0) return null;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+async function loadQuickLaunchPickPools() {
+  const { getActiveStyles } = require('./handlers/messages/style-settings-messages');
+  const { loadExpressionTemplateSettings, loadSceneSettings, loadFramingSettings } = require('./style-settings-loader');
+  const { StickerStyles, SceneTemplates, FramingTemplates } = require('./sticker-styles');
+
+  const styles = await getActiveStyles();
+  const framingSettings = (await loadFramingSettings()) || FramingTemplates;
+  const sceneSettings = (await loadSceneSettings()) || SceneTemplates;
+  const expressionTemplates = (await loadExpressionTemplateSettings()) || DefaultExpressions;
+
+  return { styles, framingSettings, sceneSettings, expressionTemplates };
+}
+
+async function executeQuickLaunch(taskId, masterSetId) {
+  const supabase = getSupabaseClient();
+
+  try {
+    console.log(`🚀 開始執行極速上架任務：${taskId}`);
+
+    await loadStylesFromDatabase();
+    await updateTaskProgress(taskId, 5, 'processing');
+
+    const masterSet = await getStickerSet(masterSetId);
+    if (!masterSet) throw new Error('找不到 master 貼圖組資料');
+
+    const userId = masterSet.user_id;
+
+    const promotion = masterSet.promotion ? JSON.parse(masterSet.promotion) : null;
+    if (!promotion || promotion.id !== 'quick_launch_v1') {
+      throw new Error('master 任務缺少 promotion 設定');
+    }
+
+    const groupKey = promotion.groupKey;
+    const totalSets = Number(promotion.totalSets) || 3;
+    const setSize = Number(promotion.setSize) || 18;
+    const refundTokens = Number(promotion.refundTokens) || 14;
+
+    const hasPhoto = masterSet.photo_base64 || masterSet.photo_url;
+    if (!hasPhoto) throw new Error('master 任務缺少照片');
+
+    // 極速上架：總計 3*18=54，預檢餘額避免中途不足
+    const totalCost = totalSets * setSize;
+    const tokenBalance = await getUserTokenBalance(userId);
+    if (tokenBalance < totalCost) {
+      throw new Error(`張數不足：需要 ${totalCost}，目前 ${tokenBalance}`);
+    }
+
+    // 把 master set 標記 completed（它不產圖，只做承載任務資料）
+    await updateStickerSetStatus(masterSetId, 'completed');
+
+    const pools = await loadQuickLaunchPickPools();
+
+    const createdSetIds = [];
+
+    for (let i = 0; i < totalSets; i++) {
+      const progressBase = 10 + Math.floor((i / totalSets) * 80);
+      await updateTaskProgress(taskId, progressBase, 'processing');
+
+      // 每組重新隨機參數
+      const pickedStyle = pickRandomFromArray(pools.styles);
+      const styleId = pickedStyle?.style_id || pickedStyle?.id;
+
+      const framingId = pickRandomIdFromRecord(pools.framingSettings) || 'halfbody';
+
+      const sceneId = pickRandomIdFromRecord(pools.sceneSettings) || 'none';
+      const sceneConfig = sceneId !== 'none' ? pools.sceneSettings[sceneId] : null;
+
+      const templateId = pickRandomIdFromRecord(pools.expressionTemplates) || 'basic';
+      const expressionPool =
+        (pools.expressionTemplates[templateId]?.expressions) ||
+        DefaultExpressions.basic.expressions;
+
+      const expressions = shuffleArray(expressionPool).slice(0, setSize);
+
+      const setName = `極速上架-${String(i + 1).padStart(2, '0')}`;
+
+      const childSetId = uuidv4();
+
+      // 直接建立 sticker_set（不建立 generation_tasks，避免觸發同 user 只能 1 筆 pending/processing 的限制）
+      const { generateCharacterID } = require('./sticker-styles');
+      const characterId = masterSet.photo_base64
+        ? generateCharacterID(masterSet.photo_base64.slice(0, 1000) + styleId)
+        : null;
+
+      const { error: insertChildSetError } = await supabase
+        .from('sticker_sets')
+        .insert([{
+          set_id: childSetId,
+          user_id: userId,
+          name: setName,
+          description: '',
+          style: styleId,
+          character_prompt: '',
+          photo_url: masterSet.photo_url || null,
+          photo_base64: masterSet.photo_base64 || null,
+          sticker_count: setSize,
+          expressions: JSON.stringify(expressions),
+          scene: sceneId,
+          scene_config: sceneConfig ? JSON.stringify(sceneConfig) : null,
+          character_id: characterId,
+          framing: framingId,
+          status: 'generating',
+          tokens_used: setSize,
+          promotion: JSON.stringify({
+            id: 'quick_launch_v1',
+            groupKey,
+            isLast: i === totalSets - 1,
+            refundTokens: i === totalSets - 1 ? refundTokens : 0
+          })
+        }]);
+
+      if (insertChildSetError) throw insertChildSetError;
+
+      // 直接重用既有 executeGeneration 流程來生成這一組（使用 master taskId 追蹤進度）
+      await executeGeneration(taskId, childSetId);
+
+      createdSetIds.push(childSetId);
+    }
+
+    await updateTaskProgress(taskId, 100, 'completed');
+
+    return {
+      success: true,
+      mode: 'quick_launch',
+      masterSetId,
+      createdSetIds
+    };
+  } catch (error) {
+    console.error(`❌ 極速上架任務失敗 (${taskId}):`, error);
+
+    await supabase
+      .from('generation_tasks')
+      .update({
+        status: 'failed',
+        error_message: error.message,
+        updated_at: new Date().toISOString()
+      })
+      .eq('task_id', taskId);
+
+    throw error;
+  }
+}
+
 async function executeGeneration(taskId, setId) {
   const supabase = getSupabaseClient();
 
@@ -336,6 +502,53 @@ async function executeGeneration(taskId, setId) {
     } else {
       console.error(`⚠️ 張數扣除失敗: ${deductResult.error}（但貼圖已生成）`);
       // 即使扣除失敗，貼圖也已經生成，不影響流程
+    }
+
+    // 6.1 🎁 極速上架活動回補（交易安全：只在完成後回補，且具冪等）
+    // 規則：3 組各 18 張總計 54 張；活動回補 14 張，淨消耗 40 張
+    // 以 set_id 作為 referenceId 進行冪等保護：同一 set_id 只回補一次
+    try {
+      const promotion = stickerSet.promotion ? JSON.parse(stickerSet.promotion) : null;
+      if (promotion && promotion.id === 'quick_launch_v1' && promotion.refundTokens) {
+        const refundTokens = Number(promotion.refundTokens) || 0;
+        const groupKey = promotion.groupKey || null;
+
+        // 只有「最後一組」才回補（符合：三組都成功才回補）
+        if (refundTokens > 0 && promotion.isLast === true) {
+          const referenceId = groupKey ? `quick_launch_v1:${groupKey}` : setId;
+
+          const { data: existingRefundTx, error: existingRefundTxError } = await supabase
+            .from('token_transactions')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('transaction_type', 'promotion_refund')
+            .eq('reference_id', referenceId)
+            .limit(1);
+
+          if (existingRefundTxError) {
+            console.error('⚠️ 檢查回補交易失敗:', existingRefundTxError.message);
+          } else if (existingRefundTx && existingRefundTx.length > 0) {
+            console.log(`🎁 已存在回補交易（reference_id=${referenceId}），跳過回補`);
+          } else {
+            const refundResult = await addTokens(
+              userId,
+              refundTokens,
+              'promotion_refund',
+              '極速上架活動回補',
+              null,
+              referenceId
+            );
+
+            if (refundResult.success) {
+              console.log(`🎁 已回補 ${refundTokens} 張（reference_id=${referenceId}）`);
+            } else {
+              console.error(`⚠️ 回補失敗: ${refundResult.error}`);
+            }
+          }
+        }
+      }
+    } catch (refundError) {
+      console.error('⚠️ 極速上架回補處理失敗:', refundError.message);
     }
 
     // 7. 完成任務
@@ -558,7 +771,24 @@ exports.handler = async function(event, context) {
     console.log(`🚀 開始生成任務：taskId=${taskId}, setId=${setId}, userId=${userId}`);
 
     // 執行生成（這可能需要幾分鐘）
-    const result = await executeGeneration(taskId, setId);
+    let result;
+
+    try {
+      const { data: taskRow } = await getSupabaseClient()
+        .from('generation_tasks')
+        .select('task_type')
+        .eq('task_id', taskId)
+        .single();
+
+      if (taskRow && taskRow.task_type === 'quick_launch') {
+        result = await executeQuickLaunch(taskId, setId);
+      } else {
+        result = await executeGeneration(taskId, setId);
+      }
+    } catch (routeError) {
+      console.error('❌ 判斷任務類型失敗，改用預設生成流程:', routeError.message);
+      result = await executeGeneration(taskId, setId);
+    }
 
     // 記錄完成（不 Push 通知）
     logGenerationResult(userId, true, setId);

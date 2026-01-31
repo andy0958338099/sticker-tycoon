@@ -901,7 +901,7 @@ async function deductTokens(lineUserId, amount, description, referenceId = null)
 /**
  * 增加張數（含有效期追蹤，購買/管理員調整用）
  */
-async function addTokens(lineUserId, amount, type, description, adminNote = null) {
+async function addTokens(lineUserId, amount, type, description, adminNote = null, referenceId = null) {
   try {
     const supabase = getSupabaseClient();
 
@@ -958,7 +958,7 @@ async function addTokens(lineUserId, amount, type, description, adminNote = null
     }
 
     // 非同步記錄交易（不阻塞回應）
-    recordTokenTransaction(lineUserId, amount, newBalance, type, description, null, adminNote, expiresAt.toISOString())
+    recordTokenTransaction(lineUserId, amount, newBalance, type, description, referenceId, adminNote, expiresAt.toISOString())
       .catch(err => console.error('記錄張數交易失敗:', err));
 
     return { success: true, balance: newBalance };
