@@ -452,9 +452,9 @@ async function handleTextMessage(replyToken, userId, text) {
     }
 
     // 🚀 極速上架（優惠活動）
-    // - 「極速上架開始」：進入極速上架模式（走命名→上傳照片→自動開始）
-    // - 「極速上架」：相容舊入口（若已上傳照片也可直接開始）
-    if (text === '極速上架開始') {
+    // 「極速上架開始」與「極速上架」都視為同一入口：
+    // 走命名 → 上傳照片 → 照片上傳成功後自動開始（不需二次點擊）
+    if (text === '極速上架開始' || text === '極速上架') {
       await getOrCreateUser(userId);
       await updateConversationState(userId, ConversationStage.NAMING, { mode: 'quick_launch' });
       return getLineClient().replyMessage(replyToken, {
@@ -469,10 +469,6 @@ async function handleTextMessage(replyToken, userId, text) {
           ]
         }
       });
-    }
-
-    if (text === '極速上架') {
-      return await handleQuickLaunch(replyToken, userId, state);
     }
 
     // 功能說明第2部分
