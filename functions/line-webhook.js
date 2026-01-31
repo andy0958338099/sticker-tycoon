@@ -37,6 +37,79 @@ function pickRandomFromArray(items) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
+async function startQuickLaunchAfterPhoto(userId) {
+  const state = await getConversationState(userId);
+
+  const tempData = state?.temp_data || {};
+  const hasPhoto = tempData.photoBase64 || tempData.photoUrl;
+
+  if (!hasPhoto) {
+    console.log('⚠️ QuickLaunch after photo: missing photo');
+    return;
+  }
+
+  // 同時只能有一個 pending/processing，避免跟既有 unique index 衝突
+  const pendingTasks = await getUserPendingTasks(userId);
+  if (pendingTasks.length > 0) {
+    console.log('⚠️ QuickLaunch after photo: user has pending task, skip');
+    return;
+  }
+
+  const totalCount = 18 * 3;
+  const refundTokens = 14;
+  const netCost = totalCount - refundTokens;
+
+  const tokenBalance = await getUserTokenBalance(userId);
+  if (tokenBalance < totalCount) {
+    console.log(`⚠️ QuickLaunch after photo: insufficient tokens. need=${totalCount}, balance=${tokenBalance}`);
+    return;
+  }
+
+  const groupKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  const masterSetData = {
+    name: '極速上架',
+    style: 'quick_launch_master',
+    character: '',
+    count: 0,
+    photoUrl: tempData.photoUrl,
+    photoBase64: tempData.photoBase64,
+    expressions: [],
+    scene: 'none',
+    sceneConfig: null,
+    customSceneDescription: null,
+    framing: 'halfbody',
+    tokensDeducted: false,
+    tokenCost: 0,
+    promotion: JSON.stringify({
+      id: 'quick_launch_v1',
+      groupKey,
+      totalSets: 3,
+      setSize: 18,
+      refundTokens,
+      netCost
+    })
+  };
+
+  const { taskId, setId } = await createGenerationTask(userId, {
+    ...masterSetData,
+    taskType: 'quick_launch'
+  });
+
+  const workerUrl = `${process.env.URL || 'https://sticker-tycoon.netlify.app'}/.netlify/functions/sticker-generator-worker-background`;
+  fetch(workerUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ taskId, setId, userId })
+  }).then(res => {
+    console.log(`📡 QuickLaunch(after photo) Worker 回應狀態: ${res.status}`);
+  }).catch(err => {
+    console.error('❌ QuickLaunch(after photo) Worker 調用失敗:', err.message);
+  });
+
+  await resetConversationState(userId);
+}
+
 async function handleQuickLaunch(replyToken, userId, state) {
   // 防連點（最佳努力）
   const QUICK_LAUNCH_LOCK_TTL_MS = 30_000;
@@ -1253,11 +1326,44 @@ async function handleImageMessage(replyToken, userId, messageId) {
     }
 
     // 調用 handler 處理下一步
-    console.log('📤 準備發送風格選擇訊息');
+    console.log('📤 準備發送下一步訊息');
+
     const message = await handlePhotoUpload(userId, photoResult);
 
-    // 直接用 replyMessage 發送（不用 pushMessage，避免 429）
-    console.log('📤 發送風格選擇 Flex Message');
+    // 若為極速上架模式：照片上傳成功後直接自動啟動（不需二次點擊）
+    const nextState = await getConversationState(userId);
+    const mode = nextState?.temp_data?.mode;
+
+    if (mode === 'quick_launch') {
+      console.log('🚀 偵測到 quick_launch 模式，照片上傳後直接啟動極速上架');
+
+      await safeReply(replyToken, {
+        type: 'text',
+        text: '✅ 照片上傳成功！\n\n' +
+              '🚀 極速上架啟動中\n' +
+              '• 自動產出 3 組（共 54 張）\n' +
+              '• 全部完成後優惠回補 14 張（淨消耗 40 張）\n\n' +
+              '⏳ 請稍候，可輸入「查詢進度」查看狀態。',
+        quickReply: {
+          items: [
+            { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
+            { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } }
+          ]
+        }
+      });
+
+      // 成功送出提示訊息後解除鎖（避免併發）
+      clearPhotoGuard(userId);
+
+      // 立刻啟動極速上架（同一個 replyToken 不能再 reply，因此用假的 token）
+      // 這裡 handleQuickLaunch 內部會 replyMessage，所以我們改為讓它只負責建立任務/觸發 worker
+      // 但目前 handleQuickLaunch 會 reply，因此：改成在這裡直接複用其邏輯（建立任務 + 觸發 worker）。
+      await startQuickLaunchAfterPhoto(userId);
+      return;
+    }
+
+    // 一般手動流程：直接回覆下一步 Flex Message
+    console.log('📤 發送手動流程 Flex Message');
     await safeReply(replyToken, message);
 
     // 成功送出下一步後解除鎖
