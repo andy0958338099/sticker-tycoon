@@ -120,6 +120,16 @@ function generateWelcomeFlexMessage() {
               text: '創建貼圖'
             },
             color: flexTheme.primaryButtonColor
+          },
+          {
+            type: 'button',
+            style: 'secondary',
+            height: 'sm',
+            action: {
+              type: 'message',
+              label: '🚀 極速上架',
+              text: '極速上架開始'
+            }
           }
         ],
         paddingAll: flexTheme.padding

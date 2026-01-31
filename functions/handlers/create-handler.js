@@ -101,21 +101,22 @@ async function handlePhotoUpload(userId, photoResult) {
   // 進入繪畫風格選擇階段
   await updateConversationState(userId, ConversationStage.STYLING, tempData);
 
-  return {
-    type: 'text',
-    text: '✅ 照片上傳成功！\n\n' +
-          '🚀 極速上架\n' +
-          '• 自動幫你配好 3 組（共 54 張）\n' +
-          '• 全部完成後優惠回補 14 張（淨消耗 40 張）\n\n' +
-          '請點選下方按鈕開始：',
-    quickReply: {
-      items: [
-        { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
-        { type: 'action', action: { type: 'message', label: '🎨 繼續手動流程', text: '繼續手動流程' } },
-        { type: 'action', action: { type: 'message', label: '❌ 取消', text: '取消' } }
-      ]
-    }
-  };
+  // 若使用者是從「極速上架開始」入口進來，照片上傳成功後直接開始
+  if (tempData.mode === 'quick_launch') {
+    return {
+      type: 'text',
+      text: '✅ 照片上傳成功！\n\n' +
+            '🚀 極速上架啟動中\n' +
+            '• 自動產出 3 組（共 54 張）\n' +
+            '• 全部完成後優惠回補 14 張（淨消耗 40 張）\n\n' +
+            '⏳ 請稍候，可輸入「查詢進度」查看狀態。'
+    };
+  }
+
+  // 一般「創建貼圖」：維持原手動流程，讓使用者繼續選擇風格
+  const styles = await getActiveStyles();
+  return generateStyleSelectionFlexMessage(styles);
+
 }
 
 /**

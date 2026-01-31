@@ -378,7 +378,26 @@ async function handleTextMessage(replyToken, userId, text) {
       return await handleTutorial(replyToken, userId);
     }
 
-    // 🚀 極速上架（優惠活動）：自動產出 3 組、每組 18 張
+    // 🚀 極速上架（優惠活動）
+    // - 「極速上架開始」：進入極速上架模式（走命名→上傳照片→自動開始）
+    // - 「極速上架」：相容舊入口（若已上傳照片也可直接開始）
+    if (text === '極速上架開始') {
+      await getOrCreateUser(userId);
+      await updateConversationState(userId, ConversationStage.NAMING, { mode: 'quick_launch' });
+      return getLineClient().replyMessage(replyToken, {
+        type: 'text',
+        text: '🚀 極速上架開始！\n\n📝 第一步：請輸入貼圖組名稱\n\n（上傳照片後將自動產出 3 組各 18 張，完成後優惠回補 14 張）',
+        quickReply: {
+          items: [
+            { type: 'action', action: { type: 'message', label: '我的日常', text: '我的日常' } },
+            { type: 'action', action: { type: 'message', label: '辦公室趣事', text: '辦公室趣事' } },
+            { type: 'action', action: { type: 'message', label: '可愛寵物', text: '可愛寵物' } },
+            { type: 'action', action: { type: 'message', label: '❌ 取消', text: '取消' } }
+          ]
+        }
+      });
+    }
+
     if (text === '極速上架') {
       return await handleQuickLaunch(replyToken, userId, state);
     }
