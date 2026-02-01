@@ -19,509 +19,392 @@
   
   <!-- Styles -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --card-bg: rgba(255, 255, 255, 0.95);
-      --accent-orange: #ff9500;
-      --accent-green: #34c759;
-      --accent-blue: #007aff;
-      --accent-purple: #af52de;
-    }
-    
-    * { box-sizing: border-box; }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      min-height: 100vh;
-      color: #333;
-    }
-    
-    .guide-container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 20px;
-      min-height: 100vh;
-    }
-    
-    /* 頂部標題區 */
-    .guide-header {
-      text-align: center;
-      padding: 30px 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
-    }
-    
-    .guide-header img {
-      width: 80px;
-      height: 80px;
-      border-radius: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    
-    .guide-header h1 {
-      color: white;
-      font-size: 1.8rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-    
-    .guide-header p {
-      color: rgba(255,255,255,0.9);
-      font-size: 1rem;
-    }
-    
-    /* 功能列表 */
-    .feature-list {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    
-    .feature-item {
-      display: flex;
-      align-items: center;
-      padding: 16px;
-      background: linear-gradient(135deg, #fff5e6 0%, #ffe4c4 100%);
-      border-radius: 16px;
-      margin-bottom: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
-    }
-    
-    .feature-item:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent-orange);
-      box-shadow: 0 6px 20px rgba(255, 149, 0, 0.2);
-    }
-    
-    .feature-item:last-child { margin-bottom: 0; }
-    
-    .feature-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      margin-right: 14px;
-      flex-shrink: 0;
-    }
-    
-    .feature-icon.orange { background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%); }
-    .feature-icon.green { background: linear-gradient(135deg, #34c759 0%, #30d158 100%); }
-    .feature-icon.blue { background: linear-gradient(135deg, #007aff 0%, #5856d6 100%); }
-    .feature-icon.purple { background: linear-gradient(135deg, #af52de 0%, #bf5af2 100%); }
-    
-    .feature-content { flex: 1; }
-    .feature-content h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 4px;
-    }
-    .feature-content p {
-      font-size: 0.85rem;
-      color: #666;
-    }
-    
-    .feature-arrow {
-      color: var(--accent-orange);
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
-    
-    /* 步驟說明 Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-    
-    .modal-overlay.active { display: flex; }
-    
-    .modal-content {
-      background: white;
-      border-radius: 24px;
-      max-width: 400px;
-      width: 100%;
-      max-height: 85vh;
-      overflow: hidden;
-    }
-    
-    .modal-header {
-      padding: 20px;
-      background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%);
-      color: white;
-      text-align: center;
-    }
-    
-    .modal-header h2 {
-      font-size: 1.4rem;
-      font-weight: 700;
-    }
-    
-    .modal-close {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-  </style>
+  <link href="/enhanced-theme.css" rel="stylesheet">
+  <link href="/tech-theme.css" rel="stylesheet">
 </head>
-<body>
-  <div class="guide-container">
-    <!-- 頂部標題 -->
-    <div class="guide-header">
-      <img src="/logo-192.png" alt="貼圖大亨">
-      <h1>📖 貼圖大亨寶典</h1>
-      <p>詳細說明，讓你用得更上手！</p>
-      <div style="margin-top: 16px; padding: 12px 20px; background: rgba(255,255,255,0.2); border-radius: 12px; display: inline-block;">
-        <span style="font-size: 0.9rem;">✨ 寶典在手，貼圖創作無敵手 ✨</span>
+<body class="tech-bg">
+  <!-- Navigation -->
+  <header class="nav-tech">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="/logo-192.png" alt="貼圖大亨 Logo" class="w-12 h-12 rounded-xl">
+          <div>
+            <h1 class="text-xl font-bold text-white">貼圖大亨</h1>
+            <p class="text-xs text-cyan-400">使用說明</p>
+          </div>
+        </div>
+        <a href="/" class="btn-neon-outline btn-small">
+          🏠 返回首頁
+        </a>
       </div>
     </div>
+  </header>
 
-    <!-- 優惠碼兌換 -->
-    <div id="coupon-code" class="feature-list">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <div class="feature-icon green" style="margin-right:0;">🎫</div>
-        <div class="feature-content">
-          <h3>優惠碼 / 活動碼 兌換</h3>
-          <p>別人分享的優惠碼可領取對應張數（限時活動）</p>
+  <!-- Hero Section -->
+  <section class="py-16 md:py-20">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 backdrop-blur-sm px-6 py-3 rounded-full border border-cyan-400/30 mb-6">
+          <span class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+          <span class="text-cyan-400 font-bold">完整使用指南</span>
         </div>
-      </div>
-      <div style="background:#f3f4f6;border-radius:16px;padding:14px;line-height:1.6;">
-        <p style="margin:0 0 8px 0;font-weight:700;">如何兌換？</p>
-        <p style="margin:0 0 8px 0;">1. 打開 LINE 與貼圖大亨 Bot 對話。</p>
-        <p style="margin:0 0 8px 0;">2. 輸入「優惠碼」或「活動碼」，進入兌換流程。</p>
-        <p style="margin:0 0 8px 0;">3. 下一句直接貼上/輸入你的兌換碼，即可領取張數。</p>
-        <p style="margin:0;font-size:0.85rem;color:#555;">規則：限時活動、每位用戶每個活動限兌換一次，請留意兌換期限。</p>
-      </div>
-    </div>
-
-    <!-- 優惠碼兌換 -->
-    <div id="coupon-code" class="feature-list">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-        <div class="feature-icon green" style="margin-right:0;">🎫</div>
-        <div class="feature-content">
-          <h3>優惠碼 / 活動碼 兌換</h3>
-          <p>別人分享的優惠碼可領取對應張數（限時活動）</p>
-        </div>
-      </div>
-      <div style="background:#f3f4f6;border-radius:16px;padding:14px;line-height:1.6;">
-        <p style="margin:0 0 8px 0;font-weight:700;">如何兌換？</p>
-        <p style="margin:0 0 8px 0;">1. 打開 LINE 與貼圖大亨 Bot 對話。</p>
-        <p style="margin:0 0 8px 0;">2. 輸入「優惠碼」或「活動碼」，進入兌換流程。</p>
-        <p style="margin:0 0 8px 0;">3. 下一句直接貼上/輸入你的兌換碼，即可領取張數。</p>
-        <p style="margin:0;font-size:0.85rem;color:#555;">規則：限時活動、每位用戶每個活動限兌換一次，請留意兌換期限。</p>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4">
+          📖 貼圖大亨<span class="title-gradient">寶典</span>
+        </h1>
+        <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+          詳細說明，讓你用得更上手！從新手到專家，一次搞懂所有功能
+        </p>
       </div>
     </div>
+  </section>
 
-    <!-- 功能列表 -->
-    <div class="feature-list">
-      <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; color: #333;">
-        🎯 主要功能
-      </h2>
+  <!-- 優惠碼兌換 -->
+  <section id="coupon-code" class="py-8">
+    <div class="container mx-auto px-4">
+      <div class="max-w-5xl mx-auto">
+        <div class="glass-card p-8 md:p-10 rounded-3xl border-2 border-green-400/30">
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-3xl shadow-lg">
+              🎫
+            </div>
+            <div>
+              <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">優惠碼 / 活動碼 兌換</h2>
+              <p class="text-gray-400">別人分享的優惠碼可領取對應張數（限時活動）</p>
+            </div>
+          </div>
 
-      <div style="background: linear-gradient(135deg, #fff5e6 0%, #ffe4c4 100%); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 2px solid rgba(255, 149, 0, 0.25);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-          <div class="feature-icon orange" style="margin-right:0; width:44px; height:44px; border-radius:12px;">🚀</div>
-          <div class="feature-content">
-            <h3 style="margin:0;">極速上架（限時活動）</h3>
-            <p style="margin:4px 0 0 0;">一瞬間做出超出 40 張可選用的貼圖，讓你輕輕鬆鬆就來上架不用愁～</p>
+          <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 md:p-8 border border-white/10">
+            <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+              <span class="text-2xl">💡</span>
+              如何兌換？
+            </h3>
+            
+            <div class="space-y-4">
+              <div class="flex gap-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                  1
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-lg font-bold text-white mb-2">打開 LINE 與貼圖大亨 Bot 對話</h4>
+                  <p class="text-gray-400">在 LINE 搜尋「@sticker-tycoon」或點擊連結加入</p>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                  2
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-lg font-bold text-white mb-2">輸入「優惠碼」或「活動碼」</h4>
+                  <p class="text-gray-400">進入兌換流程，系統會引導你完成兌換</p>
+                </div>
+              </div>
+
+              <div class="flex gap-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white font-bold text-lg">
+                  3
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-lg font-bold text-white mb-2">貼上/輸入你的兌換碼</h4>
+                  <p class="text-gray-400">下一句直接輸入兌換碼，即可領取張數</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-yellow-500/10 border border-yellow-400/30 rounded-xl">
+              <p class="text-yellow-400 text-sm">
+                <span class="font-bold">⚠️ 注意事項：</span>
+                限時活動、每位用戶每個活動限兌換一次，請留意兌換期限
+              </p>
+            </div>
           </div>
         </div>
-        <div style="background:#ffffff; border-radius: 12px; padding: 12px; line-height: 1.6;">
-          <p style="margin:0 0 6px 0;"><b>你只需要做一件事：</b>上傳一張清晰大頭照</p>
-          <p style="margin:0 0 6px 0;">系統會自動隨機挑選風格/構圖/問候話語/穿著場合，連續生成 <b>3 組</b>，每組 <b>18 張</b>（共 <b>54 張</b>）。</p>
-          <p style="margin:0 0 6px 0;">此為優惠活動，完成後會 <b>回補 14 張</b>，最終僅消耗 <b>40 張</b>。</p>
-          <p style="margin:0; font-size:0.9rem; color:#555;">生成中約需 10 分鐘，稍後到「我的貼圖」即可查看成果。</p>
-        </div>
-      </div>
-
-      <!-- 創建貼圖 -->
-      <div class="feature-item" onclick="openModal('create')">
-        <div class="feature-icon orange">📸</div>
-        <div class="feature-content">
-          <h3>創建貼圖</h3>
-          <p>上傳照片，AI 自動生成貼圖</p>
-        </div>
-        <div class="feature-arrow">怎麼用？→</div>
-      </div>
-
-      <!-- 下載/上架 -->
-      <div class="feature-item" onclick="openModal('download')">
-        <div class="feature-icon green">🚀</div>
-        <div class="feature-content">
-          <h3>下載 / 代上架</h3>
-          <p>代上架服務免費（下載+代上架共60張）</p>
-        </div>
-        <div class="feature-arrow">怎麼用？→</div>
       </div>
     </div>
+  </section>
 
-    <!-- 返回按鈕 -->
-    <div style="text-align: center; margin-top: 20px;">
-      <a href="/" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; text-decoration: none; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
-        🏠 返回首頁
-      </a>
-    </div>
-  </div>
+  <!-- 極速上架 -->
+  <section class="py-8">
+    <div class="container mx-auto px-4">
+      <div class="max-w-5xl mx-auto">
+        <div class="glass-card p-8 md:p-10 rounded-3xl border-2 border-orange-400/30 bg-gradient-to-br from-orange-500/5 to-red-500/5">
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-3xl shadow-lg animate-pulse">
+              🚀
+            </div>
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <h2 class="text-2xl md:text-3xl font-bold text-white">極速上架</h2>
+                <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">限時活動</span>
+              </div>
+              <p class="text-gray-400">一瞬間做出超過 40 張可選用的貼圖，輕鬆上架不用愁</p>
+            </div>
+          </div>
 
-  <!-- Modal: 創建貼圖 -->
-  <div class="modal-overlay" id="modal-create">
-    <div class="modal-content">
-      <div class="modal-header" style="position: relative;">
-        <button class="modal-close" onclick="closeModal('create')">✕</button>
-        <h2>📸 創建貼圖</h2>
-        <p style="font-size: 0.9rem; opacity: 0.9; margin-top: 8px;">3 步驟輕鬆完成</p>
-      </div>
-      <div class="steps-container">
-        <div class="step-card">
-          <div class="step-number">步驟 1</div>
-          <div class="step-title">上傳照片</div>
-          <div class="step-image">
-            <img src="/images/demo/step1-upload.png" alt="上傳照片" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
+          <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 md:p-8 border border-white/10 mb-6">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <span class="text-2xl">✨</span>
+              你只需要做一件事
+            </h3>
+            <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-xl p-6 border border-orange-400/30">
+              <p class="text-white text-lg font-bold mb-3">📸 上傳一張清晰大頭照</p>
+              <p class="text-gray-300 leading-relaxed">
+                系統會自動隨機挑選風格/構圖/問候話語/穿著場合，連續生成 <span class="text-orange-400 font-bold">3 組</span>，
+                每組 <span class="text-orange-400 font-bold">18 張</span>（共 <span class="text-orange-400 font-bold">54 張</span>）
+              </p>
+            </div>
           </div>
-          <div class="step-desc">
-            點擊「上傳照片」按鈕<br>
-            <span class="highlight">選擇一張清晰的正面照</span>
+
+          <div class="grid md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+              <div class="text-4xl mb-3">📦</div>
+              <h4 class="text-lg font-bold text-white mb-2">生成 54 張</h4>
+              <p class="text-gray-400 text-sm">3 組不同風格貼圖</p>
+            </div>
+            <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+              <div class="text-4xl mb-3">🎁</div>
+              <h4 class="text-lg font-bold text-white mb-2">回補 14 張</h4>
+              <p class="text-gray-400 text-sm">完成後自動回補</p>
+            </div>
+            <div class="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-green-400/30 text-center">
+              <div class="text-4xl mb-3">💰</div>
+              <h4 class="text-lg font-bold text-green-400 mb-2">實際只需 40 張</h4>
+              <p class="text-gray-400 text-sm">超划算優惠方案</p>
+            </div>
           </div>
-        </div>
-        <div class="step-card">
-          <div class="step-number">步驟 2</div>
-          <div class="step-title">選擇風格</div>
-          <div class="step-image">
-            <img src="/images/demo/step2-style.png" alt="選擇風格" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
-          </div>
-          <div class="step-desc">
-            瀏覽多種風格選項<br>
-            <span class="highlight">選擇喜歡的貼圖風格</span>
-          </div>
-        </div>
-        <div class="step-card">
-          <div class="step-number">步驟 3</div>
-          <div class="step-title">選擇表情</div>
-          <div class="step-image">
-            <img src="/images/demo/step3-emotion.png" alt="選擇表情" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
-          </div>
-          <div class="step-desc">
-            勾選想要的表情<br>
-            <span class="highlight">最多可選擇 24 種表情！</span>
+
+          <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <p class="text-gray-400 text-sm text-center">
+              ⏱️ 生成中約需 10 分鐘，稍後到「我的貼圖」即可查看成果
+            </p>
           </div>
         </div>
-        <div class="step-card">
-          <div class="step-number">步驟 4</div>
-          <div class="step-title">AI 生成中</div>
-          <div class="step-image">
-            <img src="/images/demo/step4-generating.png" alt="生成中" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
-          </div>
-          <div class="step-desc">
-            點擊「開始生成」<br>
-            <span class="highlight">AI 正在為你創作貼圖...</span>
-          </div>
-        </div>
-        <div class="step-card complete">
-          <div class="step-number" style="background: #34c759;">完成！</div>
-          <div class="step-title">🎉 貼圖生成完畢</div>
-          <div class="step-image">
-            <img src="/images/demo/step5-complete.png" alt="完成" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
-          </div>
-          <div class="step-desc">
-            可以預覽所有貼圖<br>
-            <span class="highlight">選擇下載或申請代上架！</span>
-          </div>
-        </div>
-      </div>
-      <div class="steps-indicator">
-        <span class="dot active"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Modal: 下載/上架 -->
-  <div class="modal-overlay" id="modal-download">
-    <div class="modal-content">
-      <div class="modal-header" style="position: relative; background: linear-gradient(135deg, #34c759 0%, #30d158 100%);">
-        <button class="modal-close" onclick="closeModal('download')">✕</button>
-        <h2>🚀 下載 / 代上架</h2>
-        <p style="font-size: 0.9rem; opacity: 0.9; margin-top: 8px;">讓你的貼圖上架 LINE Store</p>
-      </div>
-      <div class="steps-container">
-        <div class="step-card">
-          <div class="step-number" style="background: #34c759;">步驟 1</div>
-          <div class="step-title">選滿 40 張貼圖</div>
-          <div class="step-image">
-            <img src="/images/demo/step-40stickers.png" alt="選滿40張" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
+  <!-- 主要功能 -->
+  <section class="py-8">
+    <div class="container mx-auto px-4">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-3xl font-bold text-white mb-8 text-center">
+          🎯 主要功能說明
+        </h2>
+
+        <!-- 創建貼圖 -->
+        <div class="glass-card p-8 md:p-10 rounded-3xl mb-8">
+          <div class="flex items-center gap-4 mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-3xl shadow-lg">
+              📸
+            </div>
+            <div>
+              <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">創建貼圖</h3>
+              <p class="text-gray-400">上傳照片，AI 自動生成專屬貼圖</p>
+            </div>
           </div>
-          <div class="step-desc">
-            確認已生成 40 張貼圖<br>
-            <span class="highlight" style="color: #34c759;">才能下載或申請上架！</span>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- 步驟 1 -->
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-cyan-400/50 transition-all">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg mb-4">
+                1
+              </div>
+              <h4 class="text-lg font-bold text-white mb-3">上傳照片</h4>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                點擊「上傳照片」按鈕，選擇一張清晰的正面照
+              </p>
+            </div>
+
+            <!-- 步驟 2 -->
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-purple-400/50 transition-all">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg mb-4">
+                2
+              </div>
+              <h4 class="text-lg font-bold text-white mb-3">選擇風格</h4>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                瀏覽多種風格選項，選擇喜歡的貼圖風格
+              </p>
+            </div>
+
+            <!-- 步驟 3 -->
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-orange-400/50 transition-all">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white font-bold text-lg mb-4">
+                3
+              </div>
+              <h4 class="text-lg font-bold text-white mb-3">選擇表情</h4>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                勾選想要的表情，最多可選擇 24 種表情
+              </p>
+            </div>
+
+            <!-- 步驟 4 -->
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-green-400/30 hover:border-green-400/50 transition-all">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-lg mb-4">
+                ✓
+              </div>
+              <h4 class="text-lg font-bold text-white mb-3">完成生成</h4>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                AI 自動生成貼圖，可預覽並下載
+              </p>
+            </div>
           </div>
         </div>
-        <div class="step-card">
-          <div class="step-number" style="background: #34c759;">步驟 2</div>
-          <div class="step-title">自行下載</div>
-          <div class="step-image">
-            <img src="/images/demo/step-download.png" alt="自行下載" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
+
+        <!-- 下載/代上架 -->
+        <div class="glass-card p-8 md:p-10 rounded-3xl">
+          <div class="flex items-center gap-4 mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-3xl shadow-lg">
+              🚀
+            </div>
+            <div>
+              <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">下載 / 代上架</h3>
+              <p class="text-gray-400">讓你的貼圖上架到 LINE Store 販售</p>
+            </div>
           </div>
-          <div class="step-desc">
-            下載 ZIP 壓縮檔<br>
-            <span class="highlight" style="color: #34c759;">自行上傳到 LINE Creators</span>
+
+          <div class="grid md:grid-cols-3 gap-6">
+            <!-- 步驟 1 -->
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg mb-4">
+                1
+              </div>
+              <h4 class="text-lg font-bold text-white mb-3">選滿 40 張貼圖</h4>
+              <p class="text-gray-400 text-sm leading-relaxed mb-3">
+                確認已生成 40 張貼圖，才能下載或申請上架
+              </p>
+              <div class="bg-cyan-500/10 border border-cyan-400/30 rounded-lg p-3">
+                <p class="text-cyan-400 text-xs font-bold">✨ 必須達到 40 張才能進行下一步</p>
+              </div>
+            </div>
+
+            <!-- 步驟 2 -->
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg mb-4">
+                2
+              </div>
+              <h4 class="text-lg font-bold text-white mb-3">自行下載</h4>
+              <p class="text-gray-400 text-sm leading-relaxed mb-3">
+                下載 ZIP 壓縮檔，自行上傳到 LINE Creators Market
+              </p>
+              <div class="bg-purple-500/10 border border-purple-400/30 rounded-lg p-3">
+                <p class="text-purple-400 text-xs font-bold">💾 適合想自己管理的創作者</p>
+              </div>
+            </div>
+
+            <!-- 步驟 3 -->
+            <div class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-6 border-2 border-green-400/30">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-lg mb-4">
+                ⭐
+              </div>
+              <h4 class="text-lg font-bold text-white mb-3">代上架服務免費</h4>
+              <p class="text-gray-400 text-sm leading-relaxed mb-3">
+                填寫貼圖資訊，我們幫你上架到 LINE Store
+              </p>
+              <div class="bg-green-500/20 border border-green-400/50 rounded-lg p-3">
+                <p class="text-green-400 text-xs font-bold">🎁 下載+代上架共 60 張</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 bg-gradient-to-r from-green-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-6 border border-green-400/30">
+            <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <span class="text-2xl">💰</span>
+              代上架服務優勢
+            </h4>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="flex items-start gap-3">
+                <span class="text-green-400 text-xl">✓</span>
+                <div>
+                  <p class="text-white font-bold mb-1">專業團隊處理</p>
+                  <p class="text-gray-400 text-sm">確保一次通過審核</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-green-400 text-xl">✓</span>
+                <div>
+                  <p class="text-white font-bold mb-1">快速上架</p>
+                  <p class="text-gray-400 text-sm">1-3 天即可在 LINE Store 販售</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-green-400 text-xl">✓</span>
+                <div>
+                  <p class="text-white font-bold mb-1">省時省力</p>
+                  <p class="text-gray-400 text-sm">不需學習複雜的上傳流程</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <span class="text-green-400 text-xl">✓</span>
+                <div>
+                  <p class="text-white font-bold mb-1">服務免費</p>
+                  <p class="text-gray-400 text-sm">下載+代上架共 60 張</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="step-card">
-          <div class="step-number" style="background: #34c759;">步驟 3</div>
-          <div class="step-title">代上架服務免費（下載+代上架共60張）⭐</div>
-          <div class="step-image">
-            <img src="/images/demo/step-listing.png" alt="代上架服務" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px;">
-          </div>
-          <div class="step-desc">
-            填寫貼圖資訊<br>
-            <span class="highlight" style="color: #34c759;">我們幫你上架到 LINE Store！</span>
-          </div>
-        </div>
-      </div>
-      <div class="steps-indicator">
-        <span class="dot active"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
       </div>
     </div>
-  </div>
+  </section>
 
-  <style>
-    /* 步驟卡片樣式 */
-    .steps-container {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .steps-container::-webkit-scrollbar { display: none; }
+  <!-- CTA Section -->
+  <section class="py-16">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="glass-card p-10 rounded-3xl border-2 border-cyan-400/30">
+          <h2 class="text-3xl font-bold text-white mb-4">
+            準備好開始創作了嗎？
+          </h2>
+          <p class="text-xl text-gray-300 mb-8">
+            加入 LINE Bot，立即獲得 40 張免費額度
+          </p>
+          <a href="https://line.me/R/ti/p/@sticker-tycoon" class="btn-neon-solid btn-large inline-flex">
+            🚀 立即開始創作
+          </a>
+          <p class="text-gray-400 text-sm mt-6">
+            還有問題？在 LINE Bot 中輸入「客服」聯繫我們
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    .step-card {
-      min-width: 100%;
-      padding: 24px;
-      scroll-snap-align: start;
-      text-align: center;
-    }
-
-    .step-number {
-      display: inline-block;
-      padding: 6px 16px;
-      background: var(--accent-orange);
-      color: white;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-
-    .step-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 16px;
-    }
-
-    .step-image {
-      margin-bottom: 16px;
-    }
-
-    .step-desc {
-      font-size: 1rem;
-      color: #666;
-      line-height: 1.6;
-    }
-
-    .step-desc .highlight {
-      color: #ff6b00;
-      font-weight: 600;
-    }
-
-    .steps-indicator {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      padding: 16px;
-    }
-
-    .steps-indicator .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ddd;
-      transition: all 0.3s;
-    }
-
-    .steps-indicator .dot.active {
-      width: 24px;
-      border-radius: 4px;
-      background: var(--accent-orange);
-    }
-  </style>
+  <!-- Footer -->
+  <footer class="footer-tech py-12">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <img src="/logo-192.png" alt="貼圖大亨 Logo" class="w-12 h-12 rounded-xl">
+          <div>
+            <h3 class="text-white text-lg font-bold">貼圖大亨</h3>
+            <p class="text-xs text-cyan-400">STICKER TYCOON</p>
+          </div>
+        </div>
+        <p class="text-gray-400 text-sm mb-6">
+          用 AI 輕鬆創建專屬 LINE 貼圖，讓每個人都能成為貼圖創作者
+        </p>
+        <div class="flex justify-center gap-6 text-sm">
+          <a href="/" class="text-gray-400 hover:text-cyan-400 transition">首頁</a>
+          <a href="/token-guide.html" class="text-gray-400 hover:text-cyan-400 transition">購買說明</a>
+          <a href="/privacy.html" class="text-gray-400 hover:text-cyan-400 transition">隱私權政策</a>
+        </div>
+        <p class="text-gray-500 text-sm mt-6">© 2025 貼圖大亨 Sticker Tycoon. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
 
   <script>
-    function openModal(type) {
-      document.getElementById('modal-' + type).classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal(type) {
-      document.getElementById('modal-' + type).classList.remove('active');
-      document.body.style.overflow = '';
-    }
-
-    // 點擊背景關閉
-    document.querySelectorAll('.modal-overlay').forEach(modal => {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.classList.remove('active');
-          document.body.style.overflow = '';
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      });
-    });
-
-    // 步驟滑動指示器
-    document.querySelectorAll('.steps-container').forEach(container => {
-      const dots = container.parentElement.querySelectorAll('.dot');
-      container.addEventListener('scroll', () => {
-        const index = Math.round(container.scrollLeft / container.offsetWidth);
-        dots.forEach((dot, i) => {
-          dot.classList.toggle('active', i === index);
-        });
       });
     });
   </script>
 </body>
 </html>
-
