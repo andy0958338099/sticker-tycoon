@@ -476,7 +476,7 @@ async function handleTextMessage(replyToken, userId, text) {
       await updateConversationState(userId, ConversationStage.NAMING, { mode: 'quick_launch' });
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: '🚀 極速上架開始！\n\n📝 第一步：請輸入貼圖組名稱\n\n（上傳照片後將自動產出 3 組各 18 張，完成後優惠回補 14 張）',
+        text: '🚀 極速上架開始！\n\n📝 第一步：請輸入貼圖組名稱\n\n（上傳照片後將自動產出 3 組各 18 張，完成後優惠回補 14 張）\n\n⏰ 記得 15 分鐘後，回來把成品貼圖選好 40 張，就可以下載後上架！',
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '我的日常', text: '我的日常' } },
