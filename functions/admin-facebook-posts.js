@@ -104,6 +104,15 @@ const TONES = [
   { key: 'story', label: '故事感' }
 ];
 
+const CTA_STYLES = [
+  { key: 'quick-launch', label: '🚀 極速上架（懶人專用）', description: '強調快速、省時、一鍵搞定' },
+  { key: 'create-sticker', label: '🎨 創建貼圖（慢慢建立）', description: '強調客製化、創作樂趣、精心設計' },
+  { key: 'line', label: '引導加入官方帳號', description: '一般引導，加入 LINE 官方帳號' },
+  { key: 'link', label: '引導點擊連結', description: '引導訪問網站' },
+  { key: 'comment', label: '引導留言', description: '增加互動，留言討論' },
+  { key: 'dm', label: '引導私訊', description: '私訊諮詢' }
+];
+
 function pickTopic(excludeKeys = []) {
   const pool = TOPICS.filter(t => !excludeKeys.includes(t.key));
   if (pool.length === 0) return TOPICS[Math.floor(Math.random() * TOPICS.length)];
@@ -126,6 +135,36 @@ function buildPrompt({
 }) {
   const toneLabel = TONES.find(t => t.key === tone)?.label || '親切';
 
+  // 根據 CTA 風格調整引導文字
+  let ctaGuidance = '';
+  let specialFocus = '';
+  
+  if (ctaStyle === 'quick-launch') {
+    specialFocus = `
+
+🚀 **特別強調：極速上架功能**
+這篇貼文要重點推廣「極速上架」功能：
+- 強調「懶人專用」、「一鍵搞定」、「最快速」
+- 說明優勢：一次生成 3 組共 54 張貼圖，完成後回補 14 張，實際只需 40 張
+- 適合：想快速擁有多組貼圖、沒時間慢慢調整、追求效率的用戶
+- 語氣要輕鬆、強調省時省力、零門檻`;
+    
+    ctaGuidance = '引導用戶「加入官方帳號，輸入『極速上架』立即體驗」';
+  } else if (ctaStyle === 'create-sticker') {
+    specialFocus = `
+
+🎨 **特別強調：創建貼圖功能**
+這篇貼文要重點推廣「創建貼圖」功能：
+- 強調「慢工出細活」、「客製化」、「完全掌控」
+- 說明優勢：可以自己選擇風格、調整細節、一步步打造專屬貼圖
+- 適合：想要精心設計、有時間慢慢調整、追求個性化的用戶
+- 語氣要溫暖、強調創作樂趣、展現個性`;
+    
+    ctaGuidance = '引導用戶「加入官方帳號，輸入『創建貼圖』開始創作」';
+  } else {
+    ctaGuidance = `引導：${ctaStyle === 'comment' ? '留言' : ctaStyle === 'dm' ? '私訊' : ctaStyle === 'link' ? '點擊連結' : '加入官方帳號'}`;
+  }
+
   return `你是資深社群行銷文案寫手，請用「繁體中文」寫 1 篇可直接發在 Facebook 的貼文。
 
 品牌/產品：${websiteName}
@@ -137,18 +176,19 @@ function buildPrompt({
 - 要逐步讓讀者接受「在 LINE 內就能操作」這件事（降低學習門檻）
 - 強調這是一個能幫使用者輕鬆做出自己搞不定的 LINE 貼圖、並協助上架的服務
 - 內容要真實、不浮誇，不要過度承諾
+${specialFocus}
 
 本次主題：${topic.label}
 主題角度提示：${topic.angle}
 語氣：${toneLabel}
-CTA 風格：${ctaStyle}
+CTA 引導：${ctaGuidance}
 
 輸出格式要求：
 - 第一行要有一個能抓住注意力的開場句（不要用 emoji 開頭）
 - 內文 120~220 字
 - 用 3~6 行短段落（手機閱讀友善）
 - 只使用 0~2 個 emoji（可不用）
-- 結尾要有明確 CTA（引導：留言、私訊、或點擊連結/加入官方帳號）
+- 結尾要有明確 CTA（${ctaGuidance}）
 - 最後附 5~10 個 hashtags（與 LINE 貼圖/AI/創作/社群相關）
 - 不要提到「代幣」，統一用「張數」
 `;
@@ -178,7 +218,7 @@ async function generatePost(event) {
     tone: z.enum(TONES.map(t => t.key)).default('friendly'),
     topicKey: z.string().optional().nullable(),
     excludeTopicKeys: z.array(z.string()).optional().nullable(),
-    ctaStyle: z.enum(['comment', 'dm', 'link', 'line']).default('line')
+    ctaStyle: z.enum(['comment', 'dm', 'link', 'line', 'quick-launch', 'create-sticker']).default('line')
   });
 
   const body = schema.parse(JSON.parse(event.body || '{}'));
@@ -274,7 +314,8 @@ exports.handler = async function handler(event) {
       return json(200, {
         success: true,
         topics: TOPICS,
-        tones: TONES
+        tones: TONES,
+        ctaStyles: CTA_STYLES
       });
     }
 
