@@ -4,10 +4,18 @@
  *
  * 安全性：
  * - 使用 ADMIN_API_KEY（環境變數）做最小化保護
+ * 
+ * AI API：
+ * - 使用 DEEPSEEK_API_KEY / DEEPSEEK_API_URL（專門用於文字生成）
  */
 
 const { z } = require('zod');
-const { callChatWithFallback } = require('./utils/ai-api-client');
+const axios = require('axios');
+
+// DeepSeek API 設定（專門用於文字生成）
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_URL = process.env.DEEPSEEK_API_URL || 'https://tbnx.plus7.plus/v1/chat/completions';
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 
 // in-memory rate limit (best-effort; resets on cold start)
 const rateLimitState = new Map();
@@ -154,6 +162,15 @@ async function generatePost(event) {
 
   requireAdmin(event);
 
+  // 檢查 DeepSeek API 是否設定
+  if (!DEEPSEEK_API_KEY) {
+    console.error('❌ DEEPSEEK_API_KEY 未設定');
+    return json(500, { 
+      success: false, 
+      error: 'DeepSeek API 未設定，請在 Netlify 環境變數中設定 DEEPSEEK_API_KEY 和 DEEPSEEK_API_URL' 
+    });
+  }
+
   const schema = z.object({
     websiteName: z.string().min(1).default('貼圖大亨 Sticker Tycoon'),
     websiteUrl: z.string().min(1).default(''),
@@ -179,60 +196,66 @@ async function generatePost(event) {
     ctaStyle: body.ctaStyle
   });
 
-  const result = await callChatWithFallback(
-    [
-      {
-        role: 'user',
-        content: prompt
-      }
-    ],
-    { maxTokens: 700, timeout: 60000 }
-  );
+  console.log('🤖 使用 DeepSeek API 生成貼文...');
+  console.log(`📝 模型: ${DEEPSEEK_MODEL}`);
+  console.log(`🌐 API URL: ${DEEPSEEK_API_URL}`);
 
-  console.log('🔍 AI API 返回結構:', JSON.stringify({
-    hasResponse: !!result?.response,
-    hasData: !!result?.response?.data,
-    hasChoices: !!result?.response?.data?.choices,
-    choicesLength: result?.response?.data?.choices?.length,
-    firstChoice: result?.response?.data?.choices?.[0] ? 'exists' : 'missing'
-  }));
+  try {
+    const response = await axios.post(DEEPSEEK_API_URL, {
+      model: DEEPSEEK_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: '你是資深社群行銷文案寫手，擅長撰寫吸引人的 Facebook 貼文。'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    }, {
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 60000
+    });
 
-  // 嘗試多種可能的路徑
-  let content = null;
-  
-  // 路徑 1: result.response.data.choices[0].message.content
-  if (result?.response?.data?.choices?.[0]?.message?.content) {
-    content = result.response.data.choices[0].message.content;
-  }
-  // 路徑 2: result.response.choices[0].message.content (有些 API 直接返回)
-  else if (result?.response?.choices?.[0]?.message?.content) {
-    content = result.response.choices[0].message.content;
-  }
-  // 路徑 3: result.data.choices[0].message.content
-  else if (result?.data?.choices?.[0]?.message?.content) {
-    content = result.data.choices[0].message.content;
-  }
-  // 路徑 4: 直接在 result 中
-  else if (result?.choices?.[0]?.message?.content) {
-    content = result.choices[0].message.content;
-  }
+    console.log('✅ DeepSeek API 調用成功');
+    console.log('📊 回應狀態:', response.status);
 
-  if (!content) {
-    console.error('❌ 無法提取內容，完整回應:', JSON.stringify(result).substring(0, 2000));
-    throw new Error('AI 回應缺少內容');
+    // 提取內容
+    const content = response.data?.choices?.[0]?.message?.content;
+    
+    if (!content) {
+      console.error('❌ DeepSeek API 回應缺少內容');
+      console.error('📋 完整回應:', JSON.stringify(response.data).substring(0, 1000));
+      throw new Error('AI 回應缺少內容');
+    }
+
+    console.log('✅ 成功提取內容，長度:', content.length);
+
+    return json(200, {
+      success: true,
+      topic: {
+        key: topic.key,
+        label: topic.label
+      },
+      tone: body.tone,
+      post: content,
+      apiUsed: 'DeepSeek'
+    });
+
+  } catch (error) {
+    console.error('❌ DeepSeek API 調用失敗:', error.message);
+    if (error.response) {
+      console.error('📋 錯誤狀態:', error.response.status);
+      console.error('📋 錯誤詳情:', JSON.stringify(error.response.data).substring(0, 1000));
+    }
+    throw new Error(`DeepSeek API 錯誤: ${error.message}`);
   }
-
-  console.log('✅ 成功提取內容，長度:', content.length);
-
-  return json(200, {
-    success: true,
-    topic: {
-      key: topic.key,
-      label: topic.label
-    },
-    tone: body.tone,
-    post: content
-  });
 }
 
 exports.handler = async function handler(event) {
