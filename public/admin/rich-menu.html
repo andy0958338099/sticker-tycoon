@@ -64,18 +64,18 @@
           <div class="mt-2 bg-green-500 text-white py-2 rounded font-bold">我的貼圖</div>
         </div>
 
-        <!-- 區域 3: 示範圖集 -->
+        <!-- 區域 3: 極速上架 -->
         <div class="text-center">
           <div class="upload-zone border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer relative"
                onclick="document.getElementById('img-3').click()" data-zone="3">
             <input type="file" id="img-3" accept="image/*" class="hidden" onchange="handleZoneUpload(3, this)">
             <img id="preview-3" src="" class="w-full aspect-square object-cover rounded hidden">
             <div id="placeholder-3" class="aspect-square flex flex-col items-center justify-center text-gray-400">
-              <span class="text-4xl mb-2">✨</span>
+              <span class="text-4xl mb-2">🚀</span>
               <span class="text-sm">點擊上傳</span>
             </div>
           </div>
-          <div class="mt-2 bg-blue-500 text-white py-2 rounded font-bold">示範圖集</div>
+          <div class="mt-2 bg-blue-500 text-white py-2 rounded font-bold">極速上架</div>
         </div>
       </div>
 
@@ -141,8 +141,8 @@
   <script>
     const zoneImages = { 1: null, 2: null, 3: null };
     const zoneColors = { 1: '#FF6B6B', 2: '#4CAF50', 3: '#2196F3' };
-    const zoneLabels = { 1: '創建貼圖', 2: '我的貼圖', 3: '示範圖集' };
-    const zoneIcons = { 1: '🎨', 2: '📁', 3: '✨' };
+    const zoneLabels = { 1: '創建貼圖', 2: '我的貼圖', 3: '極速上架' };
+    const zoneIcons = { 1: '🎨', 2: '📁', 3: '🚀' };
 
     function handleZoneUpload(zone, input) {
       const file = input.files[0];

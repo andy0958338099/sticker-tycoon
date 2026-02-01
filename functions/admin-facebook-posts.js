@@ -107,6 +107,8 @@ const TONES = [
 const CTA_STYLES = [
   { key: 'quick-launch', label: '🚀 極速上架（懶人專用）', description: '強調快速、省時、一鍵搞定' },
   { key: 'create-sticker', label: '🎨 創建貼圖（慢慢建立）', description: '強調客製化、創作樂趣、精心設計' },
+  { key: 'coupon', label: '🎫 優惠券兌換', description: '推廣優惠券活動，引導用戶兌換免費張數' },
+  { key: 'fb-follow', label: '👍 關注 FB 享驚喜', description: '引導關注 Facebook 粉絲專頁，獲得獨家優惠' },
   { key: 'line', label: '引導加入官方帳號', description: '一般引導，加入 LINE 官方帳號' },
   { key: 'link', label: '引導點擊連結', description: '引導訪問網站' },
   { key: 'comment', label: '引導留言', description: '增加互動，留言討論' },
@@ -144,12 +146,13 @@ function buildPrompt({
 
 🚀 **特別強調：極速上架功能**
 這篇貼文要重點推廣「極速上架」功能：
-- 強調「懶人專用」、「一鍵搞定」、「最快速」
+- 強調「懶人專用」、「一鍵搞定」、「最快速」、「最經濟實惠」
 - 說明優勢：一次生成 3 組共 54 張貼圖，完成後回補 14 張，實際只需 40 張
 - 適合：想快速擁有多組貼圖、沒時間慢慢調整、追求效率的用戶
-- 語氣要輕鬆、強調省時省力、零門檻`;
+- 強調這是「最省錢的方案」，用最少張數獲得最多貼圖
+- 語氣要輕鬆、強調省時省力、零門檻、超划算`;
     
-    ctaGuidance = '引導用戶「加入官方帳號，輸入『極速上架』立即體驗」';
+    ctaGuidance = '引導用戶「加入官方帳號，輸入『極速上架』立即體驗最經濟實惠的方案」';
   } else if (ctaStyle === 'create-sticker') {
     specialFocus = `
 
@@ -161,6 +164,30 @@ function buildPrompt({
 - 語氣要溫暖、強調創作樂趣、展現個性`;
     
     ctaGuidance = '引導用戶「加入官方帳號，輸入『創建貼圖』開始創作」';
+  } else if (ctaStyle === 'coupon') {
+    specialFocus = `
+
+🎫 **特別強調：優惠券活動**
+這篇貼文要重點推廣「優惠券兌換」功能：
+- 強調「免費張數」、「限時優惠」、「先搶先贏」
+- 說明如何兌換：加入官方帳號後，輸入優惠碼即可獲得免費張數
+- 營造稀缺感：數量有限、活動期間限定
+- 適合：想要省錢、嘗試服務、新用戶體驗
+- 語氣要熱情、有急迫感、強調優惠價值`;
+    
+    ctaGuidance = '引導用戶「加入官方帳號，輸入優惠碼兌換免費張數」，並提醒關注粉絲專頁獲得最新優惠';
+  } else if (ctaStyle === 'fb-follow') {
+    specialFocus = `
+
+👍 **特別強調：關注 Facebook 享驚喜**
+這篇貼文要重點推廣「關注 FB 粉絲專頁」：
+- 強調「獨家優惠」、「限定活動」、「搶先知道」
+- 說明關注後的好處：定期發放優惠券、抽獎活動、創作靈感分享
+- 營造社群感：加入創作者社群、看其他人的作品、互相交流
+- 適合：想要持續獲得優惠、喜歡社群互動的用戶
+- 語氣要親切、有社群感、強調長期價值`;
+    
+    ctaGuidance = '引導用戶「按讚追蹤 Facebook 粉絲專頁」，並加入官方帳號領取關注禮';
   } else {
     ctaGuidance = `引導：${ctaStyle === 'comment' ? '留言' : ctaStyle === 'dm' ? '私訊' : ctaStyle === 'link' ? '點擊連結' : '加入官方帳號'}`;
   }
@@ -218,7 +245,7 @@ async function generatePost(event) {
     tone: z.enum(TONES.map(t => t.key)).default('friendly'),
     topicKey: z.string().optional().nullable(),
     excludeTopicKeys: z.array(z.string()).optional().nullable(),
-    ctaStyle: z.enum(['comment', 'dm', 'link', 'line', 'quick-launch', 'create-sticker']).default('line')
+    ctaStyle: z.enum(['comment', 'dm', 'link', 'line', 'quick-launch', 'create-sticker', 'coupon', 'fb-follow']).default('line')
   });
 
   const body = schema.parse(JSON.parse(event.body || '{}'));

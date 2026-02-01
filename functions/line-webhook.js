@@ -3119,6 +3119,7 @@ async function handleMorningGreeting(replyToken, userId) {
         text: `🌅 ${result.solarTerm}早安！\n\n${result.greeting}`,
         quickReply: {
           items: [
+            { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
             { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
             { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },

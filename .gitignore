@@ -42,3 +42,10 @@ tmp/
 temp/
 *.tmp
 
+# Temporary test scripts (add to scripts/temp/ instead)
+test-*.sh
+*-test.sh
+
+# Temporary fix documents (move to docs/archive/ when done)
+*_FIX_*.md
+URGENT_*.md

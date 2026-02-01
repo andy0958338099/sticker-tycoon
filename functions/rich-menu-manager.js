@@ -37,10 +37,10 @@ async function createRichMenu() {
           bounds: { x: 833, y: 0, width: 834, height: 843 },
           action: { type: 'message', text: '我的貼圖' }
         },
-        // 右：示範圖集
+        // 右：極速上架
         {
           bounds: { x: 1667, y: 0, width: 833, height: 843 },
-          action: { type: 'message', text: '示範圖集' }
+          action: { type: 'message', text: '極速上架' }
         }
       ]
     };
