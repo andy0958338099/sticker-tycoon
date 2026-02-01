@@ -476,7 +476,7 @@ async function handleTextMessage(replyToken, userId, text) {
       await updateConversationState(userId, ConversationStage.NAMING, { mode: 'quick_launch' });
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: '🚀 爆量出圖開始！\n\n📝 第一步：請輸入貼圖組名稱\n\n（上傳照片後將自動產出 3 組各 18 張，完成後優惠回補 14 張）\n\n⏰ 記得 15 分鐘後，回來把成品貼圖選好 40 張，就可以下載後上架！\n\n💡 上架需 60 張（40 張製作 + 20 張代上架）\n可透過「分享給好友」獲得免費張數，或「購買張數」快速取得！',
+        text: '🚀 爆量出圖開始！\n\n📝 第一步：請輸入貼圖組名稱\n\n（上傳照片後將自動產出 3 組各 18 張，完成後優惠回補 14 張）\n\n⏰ 記得 15 分鐘後，回來把成品貼圖選好 40 張，就可以下載！\n\n💡 下載需 60 張，可透過「分享給好友」獲得免費張數，或「購買張數」快速取得！',
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '我的日常', text: '我的日常' } },
@@ -3277,7 +3277,7 @@ function generateDemoGalleryFromDB(items) {
 
 🎁 新用戶免費送 40 張
 📸 上傳照片就能生成貼圖
-🚀 代上架服務免費（下載 + 代上架共 60 張）
+🚀 下載需60張，可透過「分享給好友」獲得免費張數，或「購買張數」快速取得
 
 👉 點擊加入：${lineOALink}`;
 
