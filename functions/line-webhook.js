@@ -1395,9 +1395,7 @@ async function handleImageMessage(replyToken, userId, messageId) {
         } else {
           await getLineClient().pushMessage(userId, {
             type: 'text',
-            text: '⚠️ 極速上架啟動失敗，請稍後重試。
-
-你可以輸入「查詢進度」或重新輸入「極速上架」。',
+            text: '⚠️ 極速上架啟動失敗，請稍後重試。\n\n你可以輸入「查詢進度」或重新輸入「極速上架」。',
             quickReply: {
               items: [
                 { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
