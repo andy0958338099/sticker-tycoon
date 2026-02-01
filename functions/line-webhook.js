@@ -1769,11 +1769,28 @@ function generateStickerListFlexMessage(userId, sets, referralInfo = null, queue
     // 取得第一張貼圖作為預覽圖（如果有）
     const previewUrl = set.main_image_url || set.preview_url || null;
 
+    // 🆕 檢查是否為極速上架 master 任務
+    const isQuickLaunchMaster = set.style === 'quick_launch_master';
+    
     const contents = [
-      { type: 'text', text: `${emoji} ${set.name || '未命名'}`, weight: 'bold', size: 'lg', wrap: true },
-      { type: 'text', text: `📊 ${set.sticker_count || 0} 張貼圖`, size: 'sm', color: '#666666', margin: 'md' },
-      { type: 'text', text: `📅 ${createdDate}`, size: 'xs', color: '#999999', margin: 'sm' }
+      { type: 'text', text: `${emoji} ${set.name || '未命名'}`, weight: 'bold', size: 'lg', wrap: true }
     ];
+    
+    // 🆕 極速上架 master 任務顯示特殊說明
+    if (isQuickLaunchMaster) {
+      contents.push(
+        { type: 'text', text: '📊 54 張貼圖', size: 'sm', color: '#666666', margin: 'md' },
+        { type: 'text', text: '（已拆分為 3 組，每組 18 張）', size: 'xs', color: '#999999', margin: 'xs', wrap: true }
+      );
+    } else {
+      contents.push(
+        { type: 'text', text: `📊 ${set.sticker_count || 0} 張貼圖`, size: 'sm', color: '#666666', margin: 'md' }
+      );
+    }
+    
+    contents.push(
+      { type: 'text', text: `📅 ${createdDate}`, size: 'xs', color: '#999999', margin: 'sm' }
+    );
 
     // 🆕 如果是生成中狀態，加上明顯的提示
     if (set.status === 'processing') {
