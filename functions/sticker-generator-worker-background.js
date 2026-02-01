@@ -780,19 +780,29 @@ exports.handler = async function(event, context) {
     let result;
 
     try {
-      const { data: taskRow } = await getSupabaseClient()
+      const { data: taskRow, error: taskQueryError } = await getSupabaseClient()
         .from('generation_tasks')
         .select('task_type')
         .eq('task_id', taskId)
         .single();
 
+      if (taskQueryError) {
+        console.error('❌ 查詢任務類型失敗:', taskQueryError);
+        throw taskQueryError;
+      }
+
+      console.log(`📋 任務類型：${taskRow?.task_type || '(無)'}`);
+
       if (taskRow && taskRow.task_type === 'quick_launch') {
+        console.log('🚀 執行極速上架流程');
         result = await executeQuickLaunch(taskId, setId);
       } else {
+        console.log('📝 執行預設生成流程');
         result = await executeGeneration(taskId, setId);
       }
     } catch (routeError) {
       console.error('❌ 判斷任務類型失敗，改用預設生成流程:', routeError.message);
+      console.error('❌ 錯誤詳情:', routeError);
       result = await executeGeneration(taskId, setId);
     }
 
