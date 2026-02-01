@@ -54,6 +54,10 @@
 [functions."scheduled-morning-greeting-background"]
   schedule = "0 21 * * *"
 
+# 用戶觸發的早安圖生成（Background Function）
+[functions."generate-morning-greeting-background"]
+  timeout = 900
+
 # Web API 函數
 [functions."web-api-auth-register"]
   timeout = 10

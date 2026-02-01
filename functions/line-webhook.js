@@ -1455,36 +1455,42 @@ async function safeReply(replyToken, message) {
 
 /**
  * 處理強制重新生成早安圖 (Admin/Debug)
+ * 改用 Background Function 異步執行，避免 timeout
  */
 async function handleForceRegenerateMorningGreeting(replyToken, userId) {
-  // 可以在此處加入管理者權限檢查
-  // const isAdmin = checkAdmin(userId);
-  // if (!isAdmin) { return; }
-
   try {
+    // 立即回覆用戶
     await getLineClient().replyMessage(replyToken, {
       type: 'text',
-      text: '🔥 收到指令，正在強制重新生成今日早安圖，請稍候約 1-2 分鐘...',
+      text: '🔥 收到指令，正在背景生成今日早安圖\n\n⏱️ 預計需要 1-2 分鐘\n💡 完成後會自動通知您！',
+      quickReply: {
+        items: [
+          { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
+          { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
+          { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } }
+        ]
+      }
     });
 
-    const result = await forceGenerateMorningGreeting();
+    // 調用 Background Function（異步執行，不等待結果）
+    const backgroundUrl = `${process.env.URL || 'https://sticker-tycoon.netlify.app'}/.netlify/functions/generate-morning-greeting-background`;
+    
+    console.log(`🚀 觸發 Background Function: ${backgroundUrl}`);
+    
+    // 使用 fetch 觸發 Background Function（fire and forget）
+    fetch(backgroundUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId })
+    }).catch(error => {
+      console.error('❌ 觸發 Background Function 失敗:', error);
+    });
 
-    if (result.success) {
-      await getLineClient().pushMessage(userId, {
-        type: 'text',
-        text: `✅ 今日早安圖已重新生成！\n請輸入「早安圖」查看。`,
-      });
-    } else {
-      await getLineClient().pushMessage(userId, {
-        type: 'text',
-        text: `❌ 重新生成失敗：\n${result.message}`,
-      });
-    }
   } catch (error) {
-    console.error('❌ 強制重新生成早安圖失敗:', error);
-    await getLineClient().pushMessage(userId, {
+    console.error('❌ 處理早安圖生成請求失敗:', error);
+    await getLineClient().replyMessage(replyToken, {
       type: 'text',
-      text: `❌ 重新生成時發生嚴重錯誤：\n${error.message}`,
+      text: `❌ 系統錯誤，請稍後再試\n\n${error.message}`,
     }).catch(e => console.error('發送錯誤通知失敗:', e));
   }
 }
