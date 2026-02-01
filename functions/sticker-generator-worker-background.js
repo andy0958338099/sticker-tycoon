@@ -20,11 +20,17 @@ async function createGenerationTask(userId, setData) {
 
   try {
     // 計算需要的張數（新制度：1張貼圖 = 1張數）
-    const stickerCount = setData.count || 6;
-    const tokenCost = setData.tokenCost || stickerCount;  // ✅ 直接等於張數
+    // ⚠️ 使用 ?? 而不是 || 來避免 0 被當作 falsy
+    const stickerCount = setData.count ?? 6;
+    const tokenCost = setData.tokenCost ?? stickerCount;  // ✅ 直接等於張數
 
     // ✅ 改為：暫不扣除張數，等生成成功後再扣
-    console.log(`💰 待扣除 ${tokenCost} 張（生成成功後扣除）`);
+    // 🚀 極速上架：count=0, tokenCost=0（master 任務不扣張數）
+    if (tokenCost > 0) {
+      console.log(`💰 待扣除 ${tokenCost} 張（生成成功後扣除）`);
+    } else {
+      console.log(`📋 Master 任務（count=${stickerCount}, tokenCost=${tokenCost}），不扣除張數`);
+    }
 
     // 🆕 生成角色一致性 ID（確保同一組貼圖使用相同角色）
     const { generateCharacterID } = require('./sticker-styles');

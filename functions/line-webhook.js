@@ -72,7 +72,7 @@ async function startQuickLaunchAfterPhoto(userId) {
       name: '極速上架',
       style: 'quick_launch_master',
       character: '',
-      count: 0,
+      count: totalCount,  // ✅ 修正：設為 54 而不是 0
       photoUrl: tempData.photoUrl,
       photoBase64: tempData.photoBase64,
       expressions: [],
@@ -81,7 +81,7 @@ async function startQuickLaunchAfterPhoto(userId) {
       customSceneDescription: null,
       framing: 'halfbody',
       tokensDeducted: false,
-      tokenCost: 0,
+      tokenCost: totalCount,  // ✅ 修正：設為 54 而不是 0
       promotion: JSON.stringify({
         id: 'quick_launch_v1',
         groupKey,
@@ -210,7 +210,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
       name: '極速上架',
       style: 'quick_launch_master',
       character: '',
-      count: 0,
+      count: totalCount,  // ✅ 修正：設為 54 而不是 0
       photoUrl: tempData.photoUrl,
       photoBase64: tempData.photoBase64,
       expressions: [],
@@ -219,7 +219,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
       customSceneDescription: null,
       framing: 'halfbody',
       tokensDeducted: false,
-      tokenCost: 0,
+      tokenCost: totalCount,  // ✅ 修正：設為 54 而不是 0
       promotion: JSON.stringify({
         id: 'quick_launch_v1',
         groupKey,
