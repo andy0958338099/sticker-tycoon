@@ -361,7 +361,7 @@ async function handleTextMessage(replyToken, userId, text) {
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-            { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
+            { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
             { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
             { type: 'action', action: { type: 'message', label: '🎫 優惠碼/活動碼', text: '優惠碼' } },
             { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } }
@@ -442,7 +442,7 @@ async function handleTextMessage(replyToken, userId, text) {
           quickReply: {
             items: [
               { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-              { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
+              { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
               { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },
               { type: 'action', action: { type: 'message', label: '🌅 早安圖', text: '早安圖' } },
               { type: 'action', action: { type: 'message', label: '✨ 示範圖集', text: '示範圖集' } }
@@ -728,7 +728,7 @@ async function handleCreationFlow(replyToken, userId, text, stage, state) {
           text: '⚠️ 請點擊下方按鈕選擇一個方案！',
           quickReply: {
             items: [
-              { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
+              { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
               { type: 'action', action: { type: 'message', label: '🎨 繼續手動流程', text: '繼續手動流程' } },
               { type: 'action', action: { type: 'message', label: '❌ 取消', text: '取消' } }
             ]
@@ -908,10 +908,13 @@ async function handleConfirmGeneration(replyToken, userId, state) {
   if (!tempData || !tempData.name || !tempData.style || (!hasPhoto && !hasCharacter)) {
     return getLineClient().replyMessage(replyToken, {
       type: 'text',
-      text: '⚠️ 創建資料不完整，請輸入「創建貼圖」重新開始',
+      text: '⚠️ 創建資料不完整\n\n' +
+            '🎨 輸入「創建貼圖」重新開始\n' +
+            '🚀 或試試「極速上架」更簡單（優惠回補 14 張）',
       quickReply: {
         items: [
           { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
+          { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
           { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
           { type: 'action', action: { type: 'message', label: '💰 我的張數', text: '張數' } }
         ]
@@ -1152,10 +1155,13 @@ async function handleCheckProgress(replyToken, userId) {
       if (!latestTask) {
         return getLineClient().replyMessage(replyToken, {
           type: 'text',
-          text: '📭 目前沒有任何生成任務\n\n輸入「創建貼圖」開始創建！',
+          text: '📭 目前沒有任何生成任務\n\n' +
+                '🎨 輸入「創建貼圖」開始創建\n' +
+                '🚀 或試試「極速上架」一次生成 3 組（優惠回補 14 張）',
           quickReply: {
             items: [
               { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
+              { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
               { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },
               { type: 'action', action: { type: 'message', label: '🌅 早安圖', text: '早安圖' } },
               { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } }
@@ -1269,10 +1275,13 @@ async function handleImageMessage(replyToken, userId, messageId) {
     if (currentStage !== ConversationStage.UPLOAD_PHOTO) {
       await safeReply(replyToken, {
         type: 'text',
-        text: '📷 如果想用照片製作貼圖，請先輸入「創建貼圖」開始！',
+        text: '📷 想用照片製作貼圖？\n\n' +
+              '🎨 輸入「創建貼圖」開始\n' +
+              '🚀 或試試「極速上架」一次生成 3 組（省 14 張）',
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
+            { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
             { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },
             { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
             { type: 'action', action: { type: 'message', label: '✨ 示範圖集', text: '示範圖集' } }
@@ -1377,7 +1386,7 @@ async function handleImageMessage(replyToken, userId, messageId) {
               items: [
                 { type: 'action', action: { type: 'message', label: '💰 購買張數', text: '購買張數' } },
                 { type: 'action', action: { type: 'message', label: '🎁 分享給好友', text: '分享給好友' } },
-                { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } }
+                { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } }
               ]
             }
           }).catch(() => {});
@@ -1399,7 +1408,7 @@ async function handleImageMessage(replyToken, userId, messageId) {
             quickReply: {
               items: [
                 { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
-                { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } }
+                { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } }
               ]
             }
           }).catch(() => {});
@@ -3074,12 +3083,16 @@ async function handleMorningGreeting(replyToken, userId) {
     const result = await getMorningGreeting();
 
     if (!result.success) {
-      // 今日早安圖尚未生成
+      // 今日早安圖尚未生成，提供立即生成選項
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: `🌅 ${result.solarTerm}早安！\n\n${result.error}\n\n💡 早安圖每日凌晨自動更新，請稍後再來看看！`,
+        text: `🌅 ${result.solarTerm}早安！\n\n` +
+              `今日早安圖尚未生成\n\n` +
+              `💡 點擊下方「🎨 立即生成」按鈕，約 1-2 分鐘即可獲得今日早安圖！\n\n` +
+              `（早安圖生成後，當天所有用戶都可以使用）`,
         quickReply: {
           items: [
+            { type: 'action', action: { type: 'message', label: '🎨 立即生成早安圖', text: '重新生成早安圖' } },
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
             { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
             { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } }
