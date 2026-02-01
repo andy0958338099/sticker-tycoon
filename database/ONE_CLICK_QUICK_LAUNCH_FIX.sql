@@ -17,34 +17,43 @@ SET sticker_count = CASE
   WHEN sticker_count <= 4 THEN 4
   WHEN sticker_count <= 8 THEN 8
   WHEN sticker_count <= 16 THEN 16
+  WHEN sticker_count <= 18 THEN 18
   WHEN sticker_count <= 24 THEN 24
   WHEN sticker_count <= 54 THEN 54
   ELSE 40
 END
-WHERE sticker_count NOT IN (0, 4, 8, 16, 24, 40, 54)
+WHERE sticker_count NOT IN (0, 4, 8, 16, 18, 24, 40, 54)
    OR sticker_count IS NULL;
 
--- 步驟 3：添加新約束（允許 0, 4, 8, 16, 24, 40, 54）
+-- 步驟 3：添加新約束（允許 0, 4, 8, 16, 18, 24, 40, 54）
+-- ⚠️ 重要：必須包含 18（極速上架子任務使用）
 ALTER TABLE sticker_sets 
 ADD CONSTRAINT sticker_sets_sticker_count_check 
-CHECK (sticker_count IN (0, 4, 8, 16, 24, 40, 54));
+CHECK (sticker_count IN (0, 4, 8, 16, 18, 24, 40, 54));
 
 -- 步驟 4：驗證（應該返回 "Success!"）
 DO $$
 DECLARE
   test_set_id TEXT := 'test-' || gen_random_uuid()::text;
 BEGIN
-  -- 測試插入 count = 54
+  -- 測試插入 count = 54 (master)
   INSERT INTO sticker_sets (
     set_id, user_id, name, style, sticker_count, status
   ) VALUES (
     test_set_id, 'test-user', '測試極速上架', 'quick_launch_master', 54, 'draft'
   );
-  
   RAISE NOTICE '✅ 測試成功：可以插入 sticker_count = 54';
   
+  -- 測試插入 count = 18 (子任務)
+  INSERT INTO sticker_sets (
+    set_id, user_id, name, style, sticker_count, status
+  ) VALUES (
+    test_set_id || '-child', 'test-user', '測試子任務', 'cute', 18, 'draft'
+  );
+  RAISE NOTICE '✅ 測試成功：可以插入 sticker_count = 18';
+  
   -- 清理測試資料
-  DELETE FROM sticker_sets WHERE set_id = test_set_id;
+  DELETE FROM sticker_sets WHERE set_id = test_set_id OR set_id = test_set_id || '-child';
   RAISE NOTICE '🧹 測試資料已清理';
   
 EXCEPTION
@@ -64,7 +73,7 @@ WHERE conrelid = 'sticker_sets'::regclass
   AND conname = 'sticker_sets_sticker_count_check';
 
 -- 預期結果：
--- CHECK ((sticker_count = ANY (ARRAY[0, 4, 8, 16, 24, 40, 54])))
+-- CHECK ((sticker_count = ANY (ARRAY[0, 4, 8, 16, 18, 24, 40, 54])))
 
 -- ========================================
 -- ✅ 完成！
