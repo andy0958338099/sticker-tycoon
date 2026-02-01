@@ -25,7 +25,7 @@ async function createGenerationTask(userId, setData) {
     const tokenCost = setData.tokenCost ?? stickerCount;  // ✅ 直接等於張數
 
     // ✅ 改為：暫不扣除張數，等生成成功後再扣
-    // 🚀 極速上架：count=0, tokenCost=0（master 任務不扣張數）
+    // 🚀 爆量出圖：count=0, tokenCost=0（master 任務不扣張數）
     if (tokenCost > 0) {
       console.log(`💰 待扣除 ${tokenCost} 張（生成成功後扣除）`);
     } else {
@@ -166,7 +166,7 @@ async function executeQuickLaunch(taskId, masterSetId) {
   const supabase = getSupabaseClient();
 
   try {
-    console.log(`🚀 開始執行極速上架任務：${taskId}`);
+    console.log(`🚀 開始執行爆量出圖任務：${taskId}`);
 
     await loadStylesFromDatabase();
     await updateTaskProgress(taskId, 5, 'processing');
@@ -189,7 +189,7 @@ async function executeQuickLaunch(taskId, masterSetId) {
     const hasPhoto = masterSet.photo_base64 || masterSet.photo_url;
     if (!hasPhoto) throw new Error('master 任務缺少照片');
 
-    // 極速上架：總計 3*18=54，預檢餘額避免中途不足
+    // 爆量出圖：總計 3*18=54，預檢餘額避免中途不足
     const totalCost = totalSets * setSize;
     const tokenBalance = await getUserTokenBalance(userId);
     if (tokenBalance < totalCost) {
@@ -223,7 +223,7 @@ async function executeQuickLaunch(taskId, masterSetId) {
 
       const expressions = shuffleArray(expressionPool).slice(0, setSize);
 
-      const setName = `極速上架-${String(i + 1).padStart(2, '0')}`;
+      const setName = `爆量出圖-${String(i + 1).padStart(2, '0')}`;
 
       const childSetId = uuidv4();
 
@@ -277,7 +277,7 @@ async function executeQuickLaunch(taskId, masterSetId) {
       createdSetIds
     };
   } catch (error) {
-    console.error(`❌ 極速上架任務失敗 (${taskId}):`, error);
+    console.error(`❌ 爆量出圖任務失敗 (${taskId}):`, error);
 
     await supabase
       .from('generation_tasks')
@@ -510,7 +510,7 @@ async function executeGeneration(taskId, setId) {
       // 即使扣除失敗，貼圖也已經生成，不影響流程
     }
 
-    // 6.1 🎁 極速上架活動回補（交易安全：只在完成後回補，且具冪等）
+    // 6.1 🎁 爆量出圖活動回補（交易安全：只在完成後回補，且具冪等）
     // 規則：3 組各 18 張總計 54 張；活動回補 14 張，淨消耗 40 張
     // 以 set_id 作為 referenceId 進行冪等保護：同一 set_id 只回補一次
     try {
@@ -540,7 +540,7 @@ async function executeGeneration(taskId, setId) {
               userId,
               refundTokens,
               'promotion_refund',
-              '極速上架活動回補',
+              '爆量出圖活動回補',
               null,
               referenceId
             );
@@ -554,7 +554,7 @@ async function executeGeneration(taskId, setId) {
         }
       }
     } catch (refundError) {
-      console.error('⚠️ 極速上架回補處理失敗:', refundError.message);
+      console.error('⚠️ 爆量出圖回補處理失敗:', refundError.message);
     }
 
     // 7. 完成任務
@@ -794,7 +794,7 @@ exports.handler = async function(event, context) {
       console.log(`📋 任務類型：${taskRow?.task_type || '(無)'}`);
 
       if (taskRow && taskRow.task_type === 'quick_launch') {
-        console.log('🚀 執行極速上架流程');
+        console.log('🚀 執行爆量出圖流程');
         result = await executeQuickLaunch(taskId, setId);
       } else {
         console.log('📝 執行預設生成流程');

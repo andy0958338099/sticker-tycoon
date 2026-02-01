@@ -1,14 +1,14 @@
 # 早安問候 Quick Reply 更新
 
 **更新日期**: 2026-02-01  
-**更新內容**: 在早安問候訊息中新增「極速上架」Quick Reply 按鈕
+**更新內容**: 在早安問候訊息中新增「爆量出圖」Quick Reply 按鈕
 
 ---
 
 ## ✅ 完成項目
 
 ### 修改檔案
-- ✅ `functions/line-webhook.js` - 在 `handleMorningGreeting` 函數中新增「極速上架」按鈕
+- ✅ `functions/line-webhook.js` - 在 `handleMorningGreeting` 函數中新增「爆量出圖」按鈕
 
 ### 更新內容
 
@@ -28,7 +28,7 @@ quickReply: {
 ```javascript
 quickReply: {
   items: [
-    { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
+    { type: 'action', action: { type: 'message', label: '🚀 爆量出圖', text: '爆量出圖' } },
     { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
     { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
     { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },
@@ -43,7 +43,7 @@ quickReply: {
 
 ### 按鈕順序設計理念
 
-1. **🚀 極速上架** - 放在第一位
+1. **🚀 爆量出圖** - 放在第一位
    - 最經濟實惠的方案
    - 吸引預算有限的用戶
    - 提高轉換率
@@ -75,21 +75,21 @@ quickReply: {
 系統：發送早安圖 + 問候語
 ↓
 顯示 5 個 Quick Reply 按鈕：
-[🚀 極速上架] [🎨 創建貼圖] [📁 我的貼圖] [📸 創建教學] [🎁 分享給好友]
+[🚀 爆量出圖] [🎨 創建貼圖] [📁 我的貼圖] [📸 創建教學] [🎁 分享給好友]
 ↓
-用戶點擊「🚀 極速上架」
+用戶點擊「🚀 爆量出圖」
 ↓
-進入極速上架流程
+進入爆量出圖流程
 ```
 
 ---
 
-## 💡 為什麼在早安問候加入「極速上架」？
+## 💡 為什麼在早安問候加入「爆量出圖」？
 
 ### 1. 高頻接觸點
 - 用戶每天早上都會看到早安圖
 - 是與用戶互動的最佳時機
-- 提高「極速上架」的曝光率
+- 提高「爆量出圖」的曝光率
 
 ### 2. 心理學優勢
 - 早上心情愉悅，決策意願高
@@ -97,12 +97,12 @@ quickReply: {
 - 更容易接受新功能
 
 ### 3. 降低決策門檻
-- 不需要主動輸入「極速上架」
+- 不需要主動輸入「爆量出圖」
 - 一鍵點擊即可開始
 - 減少用戶思考成本
 
 ### 4. 強化價值主張
-- 「極速上架」放在第一位
+- 「爆量出圖」放在第一位
 - 視覺上最顯眼
 - 暗示這是「推薦」選項
 
@@ -111,17 +111,17 @@ quickReply: {
 ## 📊 預期效果
 
 ### 短期效果（1 週）
-- 「極速上架」使用率 +30%
+- 「爆量出圖」使用率 +30%
 - 早安圖互動率 +20%
 - 新用戶轉換率 +15%
 
 ### 中期效果（1 個月）
-- 用戶對「極速上架」的認知度 +50%
-- 平均每日極速上架訂單 +40%
+- 用戶對「爆量出圖」的認知度 +50%
+- 平均每日爆量出圖訂單 +40%
 - 用戶滿意度提升
 
 ### 長期效果（3 個月）
-- 建立「早安圖 → 極速上架」的使用習慣
+- 建立「早安圖 → 爆量出圖」的使用習慣
 - 提高用戶生命週期價值
 - 口碑傳播效應
 
@@ -129,7 +129,7 @@ quickReply: {
 
 ## 🔄 其他可能需要更新的地方
 
-### 建議檢查以下位置是否也需要加入「極速上架」
+### 建議檢查以下位置是否也需要加入「爆量出圖」
 
 1. **歡迎訊息** - 新用戶首次加入時
 2. **功能說明** - 介紹功能時
@@ -146,7 +146,7 @@ quickReply: {
 git add functions/line-webhook.js
 git commit -m "feat: add quick-launch button to morning greeting quick reply
 
-- Add '🚀 極速上架' as the first quick reply button
+- Add '🚀 爆量出圖' as the first quick reply button
 - Increase exposure of the most economical option
 - Improve user conversion rate"
 
@@ -163,9 +163,9 @@ git push origin main
 - [ ] 本地測試：`netlify dev`
 - [ ] 發送「早安圖」指令
 - [ ] 確認顯示 5 個 Quick Reply 按鈕
-- [ ] 確認「🚀 極速上架」在第一位
-- [ ] 點擊「🚀 極速上架」按鈕
-- [ ] 確認進入極速上架流程
+- [ ] 確認「🚀 爆量出圖」在第一位
+- [ ] 點擊「🚀 爆量出圖」按鈕
+- [ ] 確認進入爆量出圖流程
 - [ ] 部署到生產環境
 - [ ] 在真實 LINE 環境測試
 
@@ -174,7 +174,7 @@ git push origin main
 ## 📝 相關文檔
 
 - 📖 [Facebook 貼文生成器更新](./FACEBOOK_POST_UPDATE_SUMMARY.md)
-- 📋 [極速上架功能說明](../QUICK_LAUNCH_FIX_GUIDE.md)
+- 📋 [爆量出圖功能說明](../QUICK_LAUNCH_FIX_GUIDE.md)
 - 📊 [專案更新總結](../UPDATE_SUMMARY_2026-02-01.md)
 
 ---

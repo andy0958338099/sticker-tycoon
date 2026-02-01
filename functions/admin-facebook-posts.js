@@ -105,7 +105,7 @@ const TONES = [
 ];
 
 const CTA_STYLES = [
-  { key: 'quick-launch', label: '🚀 極速上架（懶人專用）', description: '強調快速、省時、一鍵搞定' },
+  { key: 'quick-launch', label: '🚀 爆量出圖（懶人專用）', description: '強調快速、省時、一鍵搞定' },
   { key: 'create-sticker', label: '🎨 創建貼圖（慢慢建立）', description: '強調客製化、創作樂趣、精心設計' },
   { key: 'coupon', label: '🎫 優惠券兌換', description: '推廣優惠券活動，引導用戶兌換免費張數' },
   { key: 'fb-follow', label: '👍 關注 FB 享驚喜', description: '引導關注 Facebook 粉絲專頁，獲得獨家優惠' },
@@ -144,8 +144,8 @@ function buildPrompt({
   if (ctaStyle === 'quick-launch') {
     specialFocus = `
 
-🚀 **特別強調：極速上架功能**
-這篇貼文要重點推廣「極速上架」功能：
+🚀 **特別強調：爆量出圖功能**
+這篇貼文要重點推廣「爆量出圖」功能：
 - 強調「懶人專用」、「一鍵搞定」、「最快速」、「最經濟實惠」
 - 說明優勢：一次生成 3 組共 54 張貼圖，完成後回補 14 張，實際只需 40 張
 - 上架說明：上架需 60 張（40 張製作 + 20 張代上架），可透過「分享給好友」獲得免費張數，或「購買張數」快速取得
@@ -153,7 +153,7 @@ function buildPrompt({
 - 強調這是「最省錢的方案」，用最少張數獲得最多貼圖
 - 語氣要輕鬆、強調省時省力、零門檻、超划算`;
     
-    ctaGuidance = '引導用戶「加入官方帳號，輸入『極速上架』立即體驗最經濟實惠的方案」';
+    ctaGuidance = '引導用戶「加入官方帳號，輸入『爆量出圖』立即體驗最經濟實惠的方案」';
   } else if (ctaStyle === 'create-sticker') {
     specialFocus = `
 

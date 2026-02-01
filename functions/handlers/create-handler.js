@@ -102,7 +102,7 @@ async function handlePhotoUpload(userId, photoResult) {
   await updateConversationState(userId, ConversationStage.STYLING, tempData);
 
   // 一般「創建貼圖」：維持原手動流程，讓使用者繼續選擇風格
-  // 注意：極速上架模式的自動啟動由 line-webhook 的 handleImageMessage 統一處理
+  // 注意：爆量出圖模式的自動啟動由 line-webhook 的 handleImageMessage 統一處理
   const styles = await getActiveStyles();
   return generateStyleSelectionFlexMessage(styles);
 

@@ -69,7 +69,7 @@ async function startQuickLaunchAfterPhoto(userId) {
     const groupKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
     const masterSetData = {
-      name: '極速上架',
+      name: '爆量出圖',
       style: 'quick_launch_master',
       character: '',
       count: totalCount,  // ✅ 修正：設為 54 而不是 0
@@ -137,7 +137,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
   if (lock && lock.expiresAtMs > now) {
     return getLineClient().replyMessage(replyToken, {
       type: 'text',
-      text: '⏳ 已收到你的「極速上架」請求，正在處理中，請不要重複點擊\n\n📋 你可以輸入「查詢進度」查看狀態',
+      text: '⏳ 已收到你的「爆量出圖」請求，正在處理中，請不要重複點擊\n\n📋 你可以輸入「查詢進度」查看狀態',
       quickReply: {
         items: [
           { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
@@ -156,7 +156,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
     if (!hasPhoto) {
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: '⚠️ 要使用「極速上架」，請先走一次「創建貼圖」上傳照片（上傳完成後再輸入「極速上架」即可）。',
+        text: '⚠️ 要使用「爆量出圖」，請先走一次「創建貼圖」上傳照片（上傳完成後再輸入「爆量出圖」即可）。',
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
@@ -172,7 +172,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
       const task = pendingTasks[0];
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: '⚠️ 你目前已有任務正在生成中，請等待完成後再使用「極速上架」\n\n' +
+        text: '⚠️ 你目前已有任務正在生成中，請等待完成後再使用「爆量出圖」\n\n' +
               `📛 名稱：${task.sticker_set?.name || '處理中'}\n` +
               `📊 進度：${task.progress || 0}%`,
         quickReply: {
@@ -193,7 +193,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
     if (tokenBalance < totalCount) {
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: `❌ 張數不足，無法使用「極速上架」\n\n需要 ${totalCount} 張（完成後回補 ${refundTokens}，淨消耗 ${netCost}）\n目前餘額 ${tokenBalance} 張`,
+        text: `❌ 張數不足，無法使用「爆量出圖」\n\n需要 ${totalCount} 張（完成後回補 ${refundTokens}，淨消耗 ${netCost}）\n目前餘額 ${tokenBalance} 張`,
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '💰 購買張數', text: '購買張數' } },
@@ -207,7 +207,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
 
     // 隨機挑選參數（每一組都重新隨機一次）改為：建立 1 個 master 任務，交給 worker 依序跑 3 組
     const masterSetData = {
-      name: '極速上架',
+      name: '爆量出圖',
       style: 'quick_launch_master',
       character: '',
       count: totalCount,  // ✅ 修正：設為 54 而不是 0
@@ -233,7 +233,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
     // 先回覆（避免後續建立任務/觸發 worker 太久導致 reply 超時）
     await getLineClient().replyMessage(replyToken, {
       type: 'text',
-      text: '🚀 已啟動「極速上架」\n\n' +
+      text: '🚀 已啟動「爆量出圖」\n\n' +
             `📦 將依序生成 3 組資料夾（每組 18 張，共 ${totalCount} 張）\n` +
             `🎁 全部完成後回補 ${refundTokens} 張（淨消耗 ${netCost}）\n\n` +
             '⏳ 生成中可輸入「查詢進度」查看狀態',
@@ -264,7 +264,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
     await resetConversationState(userId);
     return;
   } catch (error) {
-    console.error('❌ 極速上架失敗:', error);
+    console.error('❌ 爆量出圖失敗:', error);
     return;
   } finally {
     global.__quickLaunchLock.delete(userId);
@@ -361,7 +361,7 @@ async function handleTextMessage(replyToken, userId, text) {
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-            { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
+            { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } },
             { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
             { type: 'action', action: { type: 'message', label: '🎫 優惠碼/活動碼', text: '優惠碼' } },
             { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } }
@@ -442,7 +442,7 @@ async function handleTextMessage(replyToken, userId, text) {
           quickReply: {
             items: [
               { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-              { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
+              { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } },
               { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },
               { type: 'action', action: { type: 'message', label: '🌅 早安圖', text: '早安圖' } },
               { type: 'action', action: { type: 'message', label: '✨ 示範圖集', text: '示範圖集' } }
@@ -468,15 +468,15 @@ async function handleTextMessage(replyToken, userId, text) {
       return await handleTutorial(replyToken, userId);
     }
 
-    // 🚀 極速上架（優惠活動）
-    // 「極速上架開始」與「極速上架」都視為同一入口：
+    // 🚀 爆量出圖（優惠活動）
+    // 「爆量出圖開始」與「爆量出圖」都視為同一入口：
     // 走命名 → 上傳照片 → 照片上傳成功後自動開始（不需二次點擊）
-    if (text === '極速上架開始' || text === '極速上架') {
+    if (text === '爆量出圖開始' || text === '爆量出圖') {
       await getOrCreateUser(userId);
       await updateConversationState(userId, ConversationStage.NAMING, { mode: 'quick_launch' });
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: '🚀 極速上架開始！\n\n📝 第一步：請輸入貼圖組名稱\n\n（上傳照片後將自動產出 3 組各 18 張，完成後優惠回補 14 張）\n\n⏰ 記得 15 分鐘後，回來把成品貼圖選好 40 張，就可以下載後上架！\n\n💡 上架需 60 張（40 張製作 + 20 張代上架）\n可透過「分享給好友」獲得免費張數，或「購買張數」快速取得！',
+        text: '🚀 爆量出圖開始！\n\n📝 第一步：請輸入貼圖組名稱\n\n（上傳照片後將自動產出 3 組各 18 張，完成後優惠回補 14 張）\n\n⏰ 記得 15 分鐘後，回來把成品貼圖選好 40 張，就可以下載後上架！\n\n💡 上架需 60 張（40 張製作 + 20 張代上架）\n可透過「分享給好友」獲得免費張數，或「購買張數」快速取得！',
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '我的日常', text: '我的日常' } },
@@ -728,7 +728,7 @@ async function handleCreationFlow(replyToken, userId, text, stage, state) {
           text: '⚠️ 請點擊下方按鈕選擇一個方案！',
           quickReply: {
             items: [
-              { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
+              { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } },
               { type: 'action', action: { type: 'message', label: '🎨 繼續手動流程', text: '繼續手動流程' } },
               { type: 'action', action: { type: 'message', label: '❌ 取消', text: '取消' } }
             ]
@@ -910,11 +910,11 @@ async function handleConfirmGeneration(replyToken, userId, state) {
       type: 'text',
       text: '⚠️ 創建資料不完整\n\n' +
             '🎨 輸入「創建貼圖」重新開始\n' +
-            '🚀 或試試「極速上架」更簡單（優惠回補 14 張）',
+            '🚀 或試試「爆量出圖」更簡單（優惠回補 14 張）',
       quickReply: {
         items: [
           { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-          { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
+          { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } },
           { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
           { type: 'action', action: { type: 'message', label: '💰 我的張數', text: '張數' } }
         ]
@@ -1157,11 +1157,11 @@ async function handleCheckProgress(replyToken, userId) {
           type: 'text',
           text: '📭 目前沒有任何生成任務\n\n' +
                 '🎨 輸入「創建貼圖」開始創建\n' +
-                '🚀 或試試「極速上架」一次生成 3 組（優惠回補 14 張）',
+                '🚀 或試試「爆量出圖」一次生成 3 組（優惠回補 14 張）',
           quickReply: {
             items: [
               { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-              { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
+              { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } },
               { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },
               { type: 'action', action: { type: 'message', label: '🌅 早安圖', text: '早安圖' } },
               { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } }
@@ -1277,11 +1277,11 @@ async function handleImageMessage(replyToken, userId, messageId) {
         type: 'text',
         text: '📷 想用照片製作貼圖？\n\n' +
               '🎨 輸入「創建貼圖」開始\n' +
-              '🚀 或試試「極速上架」一次生成 3 組（省 14 張）',
+              '🚀 或試試「爆量出圖」一次生成 3 組（省 14 張）',
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-            { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } },
+            { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } },
             { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },
             { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
             { type: 'action', action: { type: 'message', label: '✨ 示範圖集', text: '示範圖集' } }
@@ -1352,16 +1352,16 @@ async function handleImageMessage(replyToken, userId, messageId) {
 
     const message = await handlePhotoUpload(userId, photoResult);
 
-    // 若為極速上架模式：照片上傳成功後直接自動啟動（不需二次點擊）
+    // 若為爆量出圖模式：照片上傳成功後直接自動啟動（不需二次點擊）
     const nextState = await getConversationState(userId);
     const mode = nextState?.temp_data?.mode;
 
     if (mode === 'quick_launch') {
-      console.log('🚀 偵測到 quick_launch 模式，照片上傳後直接啟動極速上架');
+      console.log('🚀 偵測到 quick_launch 模式，照片上傳後直接啟動爆量出圖');
 
       await safeReply(replyToken, {
         type: 'text',
-        text: '🚀 極速上架進行中...\n\n' +
+        text: '🚀 爆量出圖進行中...\n\n' +
               'AI 正在為您自動選擇風格並生成 3 組貼圖，過程約需 10 分鐘。\n\n' +
               '請稍候再點擊「我的貼圖」查看成果。',
         quickReply: {
@@ -1386,14 +1386,14 @@ async function handleImageMessage(replyToken, userId, messageId) {
               items: [
                 { type: 'action', action: { type: 'message', label: '💰 購買張數', text: '購買張數' } },
                 { type: 'action', action: { type: 'message', label: '🎁 分享給好友', text: '分享給好友' } },
-                { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } }
+                { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } }
               ]
             }
           }).catch(() => {});
         } else if (startResult && startResult.reason === 'has_pending_task') {
           await getLineClient().pushMessage(userId, {
             type: 'text',
-            text: '⚠️ 你已有任務正在生成中，請完成後再使用極速上架',
+            text: '⚠️ 你已有任務正在生成中，請完成後再使用爆量出圖',
             quickReply: {
               items: [
                 { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
@@ -1404,11 +1404,11 @@ async function handleImageMessage(replyToken, userId, messageId) {
         } else {
           await getLineClient().pushMessage(userId, {
             type: 'text',
-            text: '⚠️ 極速上架啟動失敗，請稍後重試。\n\n你可以輸入「查詢進度」或重新輸入「極速上架」。',
+            text: '⚠️ 爆量出圖啟動失敗，請稍後重試。\n\n你可以輸入「查詢進度」或重新輸入「爆量出圖」。',
             quickReply: {
               items: [
                 { type: 'action', action: { type: 'message', label: '📋 查詢進度', text: '查詢進度' } },
-                { type: 'action', action: { type: 'message', label: '🚀 極速上架（優惠）', text: '極速上架' } }
+                { type: 'action', action: { type: 'message', label: '🚀 爆量出圖（優惠）', text: '爆量出圖' } }
               ]
             }
           }).catch(() => {});
@@ -1784,14 +1784,14 @@ function generateStickerListFlexMessage(userId, sets, referralInfo = null, queue
     // 取得第一張貼圖作為預覽圖（如果有）
     const previewUrl = set.main_image_url || set.preview_url || null;
 
-    // 🆕 檢查是否為極速上架 master 任務
+    // 🆕 檢查是否為爆量出圖 master 任務
     const isQuickLaunchMaster = set.style === 'quick_launch_master';
     
     const contents = [
       { type: 'text', text: `${emoji} ${set.name || '未命名'}`, weight: 'bold', size: 'lg', wrap: true }
     ];
     
-    // 🆕 極速上架 master 任務顯示特殊說明
+    // 🆕 爆量出圖 master 任務顯示特殊說明
     if (isQuickLaunchMaster) {
       contents.push(
         { type: 'text', text: '📊 54 張貼圖', size: 'sm', color: '#666666', margin: 'md' },
@@ -3119,7 +3119,7 @@ async function handleMorningGreeting(replyToken, userId) {
         text: `🌅 ${result.solarTerm}早安！\n\n${result.greeting}`,
         quickReply: {
           items: [
-            { type: 'action', action: { type: 'message', label: '🚀 極速上架', text: '極速上架' } },
+            { type: 'action', action: { type: 'message', label: '🚀 爆量出圖', text: '爆量出圖' } },
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
             { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
             { type: 'action', action: { type: 'message', label: '📸 創建教學', text: '功能說明' } },

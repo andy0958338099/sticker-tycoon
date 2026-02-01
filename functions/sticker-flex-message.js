@@ -127,8 +127,8 @@ function generateWelcomeFlexMessage() {
             height: 'sm',
             action: {
               type: 'message',
-              label: '🚀 極速上架',
-              text: '極速上架開始'
+              label: '🚀 爆量出圖',
+              text: '爆量出圖開始'
             }
           }
         ],
