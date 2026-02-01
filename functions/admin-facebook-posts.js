@@ -189,10 +189,40 @@ async function generatePost(event) {
     { maxTokens: 700, timeout: 60000 }
   );
 
-  const content = result?.response?.data?.choices?.[0]?.message?.content;
+  console.log('🔍 AI API 返回結構:', JSON.stringify({
+    hasResponse: !!result?.response,
+    hasData: !!result?.response?.data,
+    hasChoices: !!result?.response?.data?.choices,
+    choicesLength: result?.response?.data?.choices?.length,
+    firstChoice: result?.response?.data?.choices?.[0] ? 'exists' : 'missing'
+  }));
+
+  // 嘗試多種可能的路徑
+  let content = null;
+  
+  // 路徑 1: result.response.data.choices[0].message.content
+  if (result?.response?.data?.choices?.[0]?.message?.content) {
+    content = result.response.data.choices[0].message.content;
+  }
+  // 路徑 2: result.response.choices[0].message.content (有些 API 直接返回)
+  else if (result?.response?.choices?.[0]?.message?.content) {
+    content = result.response.choices[0].message.content;
+  }
+  // 路徑 3: result.data.choices[0].message.content
+  else if (result?.data?.choices?.[0]?.message?.content) {
+    content = result.data.choices[0].message.content;
+  }
+  // 路徑 4: 直接在 result 中
+  else if (result?.choices?.[0]?.message?.content) {
+    content = result.choices[0].message.content;
+  }
+
   if (!content) {
+    console.error('❌ 無法提取內容，完整回應:', JSON.stringify(result).substring(0, 2000));
     throw new Error('AI 回應缺少內容');
   }
+
+  console.log('✅ 成功提取內容，長度:', content.length);
 
   return json(200, {
     success: true,
