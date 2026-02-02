@@ -23,9 +23,9 @@ async function createRichMenu() {
         width: 2500,
         height: 843
       },
-      selected: true,
+      selected: false,  // 改為 false = 預設收合，用戶可點擊展開
       name: '貼圖大亨主選單',
-      chatBarText: '貼圖大亨',
+      chatBarText: '點此打開快捷選單 ✨',  // 提示文字，吸引用戶點擊
       areas: [
         // 左：創建貼圖
         {
