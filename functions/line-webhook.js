@@ -357,7 +357,9 @@ async function handleTextMessage(replyToken, userId, text) {
       await resetConversationState(userId);
       return getLineClient().replyMessage(replyToken, {
         type: 'text',
-        text: '❌ 已取消創建流程\n\n輸入「創建貼圖」重新開始！',
+        text: '❌ 已取消創建流程\n\n' +
+              '若要重新開始：可以輸入「創建貼圖」，或點選下方按鈕重新開始。\n\n' +
+              '➡ 請往下看聊天畫面最底部的按鈕列，點選「🎨 創建貼圖」即可重新開始。',
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
