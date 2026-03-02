@@ -3599,13 +3599,16 @@ async function handlePurchaseInfo(replyToken) {
     };
   };
 
-  // 方案輪播（使用新的張數方案：140張 和 260張）
+  // 方案輪播（使用新的張數方案：10 張、140 張 和 260 張）
   const planCarousel = {
     type: 'flex',
     altText: '🛒 購買張數方案',
     contents: {
       type: 'carousel',
       contents: [
+        // 小額體驗：20 元 / 10 張
+        createPlanBubble(20, 10, 0, false),
+        // 入門與熱門方案
         createPlanBubble(300, 140, 0, false),
         createPlanBubble(500, 260, 0, true)
       ]
@@ -3622,6 +3625,7 @@ async function handlePurchaseInfo(replyToken) {
 async function handleCheckout(replyToken, userId, price) {
   // 驗證價格
   const planConfigMap = {
+    20: { price: 20, tokens: 10 },
     300: { price: 300, tokens: 140 },
     500: { price: 500, tokens: 260 },
   };
