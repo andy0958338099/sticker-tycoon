@@ -3648,6 +3648,13 @@ async function handleCheckout(replyToken, userId, price) {
   }
 
   try {
+    console.log('🧾 準備建立 LINE Pay 訂單', {
+      backendBaseUrl,
+      userId,
+      price: selectedPlan.price,
+      tokens: selectedPlan.tokens
+    });
+
     // 呼叫騰訊雲上的 LINE Pay 後端，建立付款訂單
     const response = await axios.post(`${backendBaseUrl}/line-pay/request`, {
       plan: selectedPlan.price,
@@ -3661,6 +3668,16 @@ async function handleCheckout(replyToken, userId, price) {
       console.error('❌ 騰訊雲 LINE Pay 後端回傳缺少 paymentUrl', data);
       throw new Error('missing_payment_url');
     }
+
+    console.log('✅ 成功取得 LINE Pay 訂單', {
+      userId,
+      price: selectedPlan.price,
+      tokens: selectedPlan.tokens,
+      orderId: data.orderId,
+      transactionId: data.transactionId,
+      hasPaymentUrlWeb: Boolean(data.paymentUrlWeb),
+      hasPaymentUrlApp: Boolean(data.paymentUrlApp)
+    });
 
     const flex = {
       type: 'flex',
@@ -3740,7 +3757,11 @@ async function handleCheckout(replyToken, userId, price) {
 
     return getLineClient().replyMessage(replyToken, flex);
   } catch (error) {
-    console.error('❌ 建立 LINE Pay 付款訂單失敗:', error?.response?.data || error);
+    console.error('❌ 建立 LINE Pay 付款訂單失敗:', {
+      userId,
+      price,
+      error: error?.response?.data || error
+    });
     return getLineClient().replyMessage(replyToken, {
       type: 'text',
       text: '目前 LINE Pay 付款暫時無法使用，請稍後再試或聯絡客服協助完成結帳。',
