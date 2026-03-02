@@ -617,7 +617,7 @@ async function handleTextMessage(replyToken, userId, text) {
     if (text.startsWith('結帳:')) {
       const priceText = text.replace('結帳:', '').trim();
       const price = Number(priceText);
-      return await handleCheckout(replyToken, price);
+      return await handleCheckout(replyToken, userId, price);
     }
 
     // 購買方案（舊版，保留向後兼容）
@@ -3617,9 +3617,9 @@ async function handlePurchaseInfo(replyToken) {
 }
 
 /**
- * 處理結帳 - 顯示付款方式和說明
+ * 處理結帳 - 改為使用 LINE Pay 金流（由騰訊雲後端服務處理）
  */
-async function handleCheckout(replyToken, price) {
+async function handleCheckout(replyToken, userId, price) {
   // 驗證價格
   const planConfigMap = {
     300: { price: 300, tokens: 140 },
@@ -3634,176 +3634,114 @@ async function handleCheckout(replyToken, price) {
     });
   }
 
-  // 付款資訊
-  const paymentInfo = {
-    type: 'flex',
-    altText: '💳 付款方式',
-    contents: {
-      type: 'bubble',
-      size: 'mega',
-      header: {
-        type: 'box',
-        layout: 'vertical',
-        backgroundColor: '#06C755',
-        paddingAll: 'xl',
-        contents: [
-          {
-            type: 'text',
-            text: '💳 付款方式',
-            size: 'xl',
-            weight: 'bold',
-            color: '#FFFFFF',
-            align: 'center',
-          },
-          {
-            type: 'text',
-            text: `你已選擇：NT$ ${selectedPlan.price}（${selectedPlan.tokens} 張）`,
-            size: 'sm',
-            color: '#FFFFFFE6',
-            align: 'center',
-            margin: 'md',
-            wrap: true,
-          },
-        ],
-      },
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        paddingAll: 'lg',
-        spacing: 'md',
-        contents: [
-          // 銀行轉帳
-          {
-            type: 'box',
-            layout: 'vertical',
-            backgroundColor: '#F7F9FC',
-            cornerRadius: 'lg',
-            paddingAll: 'lg',
-            contents: [
-              { type: 'text', text: '🏦 銀行轉帳', size: 'md', weight: 'bold', color: '#333333' },
-              { type: 'separator', margin: 'md' },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                margin: 'md',
-                contents: [
-                  { type: 'text', text: '銀行', size: 'sm', color: '#888888', flex: 2 },
-                  { type: 'text', text: '連線商業銀行（824）', size: 'sm', weight: 'bold', color: '#333333', flex: 4, align: 'end' }
-                ]
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  { type: 'text', text: '帳號', size: 'sm', color: '#888888', flex: 2 },
-                  { type: 'text', text: '111000196474', size: 'md', weight: 'bold', color: '#2D9CDB', flex: 4, align: 'end' }
-                ]
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                contents: [
-                  { type: 'text', text: '戶名', size: 'sm', color: '#888888', flex: 2 },
-                  { type: 'text', text: '梁勝喜', size: 'sm', weight: 'bold', color: '#333333', flex: 4, align: 'end' }
-                ]
-              }
-            ]
-          },
-          // 付款步驟
-          {
-            type: 'box',
-            layout: 'vertical',
-            backgroundColor: '#FFF8E7',
-            cornerRadius: 'lg',
-            paddingAll: 'lg',
-            margin: 'md',
-            contents: [
-              { type: 'text', text: '📝 付款步驟', size: 'md', weight: 'bold', color: '#333333' },
-              { type: 'separator', margin: 'md' },
-              { type: 'text', text: '1️⃣ 轉帳到上方帳戶', size: 'sm', color: '#666666', margin: 'md' },
-              { type: 'text', text: '2️⃣ 截圖轉帳明細', size: 'sm', color: '#666666', margin: 'sm' },
-              { type: 'text', text: '3️⃣ 傳送截圖給我們', size: 'sm', color: '#666666', margin: 'sm' },
-              { type: 'text', text: '4️⃣ 客服確認後立即入帳', size: 'sm', color: '#666666', margin: 'sm' }
-            ]
-          },
-          // 提示
-          {
-            type: 'box',
-            layout: 'horizontal',
-            backgroundColor: '#FFE8E8',
-            cornerRadius: 'md',
-            paddingAll: 'sm',
-            margin: 'md',
-            contents: [
-              { type: 'text', text: '⚡', size: 'sm', flex: 0 },
-              { type: 'text', text: '請在轉帳備註填寫 LINE 名稱，加速對帳！', size: 'xs', color: '#CC0000', flex: 1, wrap: true, margin: 'sm' }
-            ]
-          }
-        ]
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        paddingAll: 'md',
-        contents: [
-          { type: 'text', text: '👇 掃碼轉帳更方便', size: 'sm', align: 'center', color: '#888888' }
-        ]
-      }
-    }
-  };
+  const backendBaseUrl = (process.env.LINE_PAY_BACKEND_URL || '').replace(/\/+$/, '');
+  if (!backendBaseUrl) {
+    console.error('❌ LINE_PAY_BACKEND_URL 未設定，無法建立 LINE Pay 付款訂單');
+    return getLineClient().replyMessage(replyToken, {
+      type: 'text',
+      text: '目前付款系統尚未完成設定，請稍後再試或聯絡客服協助處理結帳。',
+    });
+  }
 
-  // QR Code 圖片
-  const qrMessage = {
-    type: 'image',
-    originalContentUrl: 'https://sticker-tycoon.netlify.app/payment-qr.png',
-    previewImageUrl: 'https://sticker-tycoon.netlify.app/payment-qr.png',
-    quickReply: {
-      items: [
-        {
-          type: 'action',
-          action: {
-            type: 'uri',
-            label: '🎬 YouTuber推廣計畫',
-            uri: `${process.env.URL || 'https://sticker-tycoon.netlify.app'}/youtuber-promotion.html`
-          }
-        },
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '📁 我的貼圖',
-            text: '我的貼圖'
-          }
-        },
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '🎨 創建貼圖',
-            text: '創建貼圖'
-          }
-        },
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '💰 購買張數',
-            text: '購買張數'
-          }
-        },
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '🎁 分享給好友',
-            text: '分享給好友'
-          }
-        }
-      ]
-    }
-  };
+  try {
+    // 呼叫騰訊雲上的 LINE Pay 後端，建立付款訂單
+    const response = await axios.post(`${backendBaseUrl}/line-pay/request`, {
+      plan: selectedPlan.price,
+      userId,
+    });
 
-  return getLineClient().replyMessage(replyToken, [paymentInfo, qrMessage]);
+    const data = response?.data || {};
+    const paymentUrl = data.paymentUrlApp || data.paymentUrlWeb || data.paymentUrl;
+
+    if (!paymentUrl) {
+      console.error('❌ 騰訊雲 LINE Pay 後端回傳缺少 paymentUrl', data);
+      throw new Error('missing_payment_url');
+    }
+
+    const flex = {
+      type: 'flex',
+      altText: '💳 使用 LINE Pay 付款',
+      contents: {
+        type: 'bubble',
+        size: 'mega',
+        header: {
+          type: 'box',
+          layout: 'vertical',
+          backgroundColor: '#06C755',
+          paddingAll: 'xl',
+          contents: [
+            {
+              type: 'text',
+              text: '💳 使用 LINE Pay 付款',
+              size: 'xl',
+              weight: 'bold',
+              color: '#FFFFFF',
+              align: 'center',
+            },
+            {
+              type: 'text',
+              text: `你已選擇：NT$ ${selectedPlan.price}（${selectedPlan.tokens} 張）`,
+              size: 'sm',
+              color: '#FFFFFFE6',
+              align: 'center',
+              margin: 'md',
+              wrap: true,
+            },
+          ],
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          paddingAll: 'lg',
+          spacing: 'md',
+          contents: [
+            {
+              type: 'box',
+              layout: 'vertical',
+              backgroundColor: '#E6FFF3',
+              cornerRadius: 'lg',
+              paddingAll: 'lg',
+              contents: [
+                {
+                  type: 'text',
+                  text: '📲 點擊下方按鈕開啟 LINE Pay，完成付款後系統會自動入帳張數。',
+                  size: 'sm',
+                  color: '#047857',
+                  wrap: true,
+                },
+              ],
+            },
+          ],
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          paddingAll: 'md',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'button',
+              style: 'primary',
+              color: '#06C755',
+              action: {
+                type: 'uri',
+                label: '使用 LINE Pay 付款',
+                uri: paymentUrl,
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    return getLineClient().replyMessage(replyToken, flex);
+  } catch (error) {
+    console.error('❌ 建立 LINE Pay 付款訂單失敗:', error?.response?.data || error);
+    return getLineClient().replyMessage(replyToken, {
+      type: 'text',
+      text: '目前 LINE Pay 付款暫時無法使用，請稍後再試或聯絡客服協助完成結帳。',
+    });
+  }
 }
 
 /**
