@@ -3680,49 +3680,49 @@ async function handleCheckout(replyToken, userId, price) {
     });
 
     const flex = {
-      type: 'flex',
+    type: 'flex',
       altText: '💳 使用 LINE Pay 付款',
-      contents: {
-        type: 'bubble',
-        size: 'mega',
-        header: {
-          type: 'box',
-          layout: 'vertical',
-          backgroundColor: '#06C755',
-          paddingAll: 'xl',
-          contents: [
-            {
-              type: 'text',
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#06C755',
+        paddingAll: 'xl',
+        contents: [
+          {
+            type: 'text',
               text: '💳 使用 LINE Pay 付款',
-              size: 'xl',
-              weight: 'bold',
-              color: '#FFFFFF',
-              align: 'center',
-            },
-            {
-              type: 'text',
-              text: `你已選擇：NT$ ${selectedPlan.price}（${selectedPlan.tokens} 張）`,
-              size: 'sm',
-              color: '#FFFFFFE6',
-              align: 'center',
-              margin: 'md',
-              wrap: true,
-            },
-          ],
-        },
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          paddingAll: 'lg',
-          spacing: 'md',
-          contents: [
-            {
-              type: 'box',
-              layout: 'vertical',
+            size: 'xl',
+            weight: 'bold',
+            color: '#FFFFFF',
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: `你已選擇：NT$ ${selectedPlan.price}（${selectedPlan.tokens} 張）`,
+            size: 'sm',
+            color: '#FFFFFFE6',
+            align: 'center',
+            margin: 'md',
+            wrap: true,
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: 'lg',
+        spacing: 'md',
+        contents: [
+          {
+            type: 'box',
+            layout: 'vertical',
               backgroundColor: '#E6FFF3',
-              cornerRadius: 'lg',
-              paddingAll: 'lg',
-              contents: [
+            cornerRadius: 'lg',
+            paddingAll: 'lg',
+            contents: [
                 {
                   type: 'text',
                   text: '📲 點擊下方按鈕開啟 LINE Pay，完成付款後系統會自動入帳張數。',
@@ -3730,22 +3730,30 @@ async function handleCheckout(replyToken, userId, price) {
                   color: '#047857',
                   wrap: true,
                 },
+                {
+                  type: 'text',
+                  text: '⚠️ 若 LINE Pay 顯示暫時性錯誤，請回到聊天室重新輸入「購買張數」再下單（系統會自動產生新訂單號）。',
+                  size: 'xs',
+                  color: '#6B7280',
+                  wrap: true,
+                  margin: 'md',
+                },
               ],
             },
           ],
-        },
-        footer: {
-          type: 'box',
-          layout: 'vertical',
-          paddingAll: 'md',
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: 'md',
           spacing: 'sm',
-          contents: [
+        contents: [
             {
               type: 'button',
               style: 'primary',
               color: '#06C755',
-              action: {
-                type: 'uri',
+          action: {
+            type: 'uri',
                 label: '使用 LINE Pay 付款',
                 uri: paymentUrl,
               },
