@@ -773,19 +773,10 @@ async function recordTokenTransaction(userId, amount, balanceAfter, type, descri
 }
 
 /**
- * 取得用戶張數餘額（優化版：使用快取的用戶資料）
+ * 取得用戶張數餘額（強制即時查詢資料庫，不使用快取）
  */
 async function getUserTokenBalance(lineUserId) {
   try {
-    const cacheKey = globalCache.generateKey('user', lineUserId);
-    const cachedUser = globalCache.get(cacheKey);
-
-    // 如果有快取的用戶資料，直接返回
-    if (cachedUser && cachedUser.sticker_credits !== undefined) {
-      return cachedUser.sticker_credits;
-    }
-
-    // 否則查詢資料庫
     const { data, error } = await getSupabaseClient()
       .from('users')
       .select('sticker_credits')
