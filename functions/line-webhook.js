@@ -293,6 +293,77 @@ let client = null;
 const PHOTO_UPLOAD_COOLDOWN_MS = 10_000; // 10 秒內重複上傳直接阻擋
 const photoUploadGuard = new Map();
 
+// ================================
+// 防止 LINE 對話連點（記憶體鎖 + 短冷卻）
+// 注意：Serverless 為最佳努力防護，仍需搭配資料庫狀態判斷
+// ================================
+const ACTION_LOCK_TTL_MS = 8_000;
+const ACTION_COOLDOWN_MS = 1_500;
+const DUPLICATE_HINT_INTERVAL_MS = 2_000;
+const protectedRapidActions = new Set([
+  '創建貼圖',
+  '開始',
+  '新增貼圖',
+  '爆量出圖',
+  '爆量出圖開始',
+  '確認生成',
+  '查詢進度',
+  '我的貼圖',
+  '購買張數',
+  '優惠碼'
+]);
+const userActionGuard = new Map();
+
+function isProtectedRapidAction(text) {
+  return protectedRapidActions.has(String(text || '').trim());
+}
+
+function acquireUserActionLock(userId, actionKey) {
+  const now = Date.now();
+  const current = userActionGuard.get(userId) || {
+    actionKey: null,
+    lockUntilMs: 0,
+    cooldownUntilMs: 0,
+    lastHintAtMs: 0
+  };
+
+  const isSameAction = current.actionKey === actionKey;
+  const inLockWindow = now < current.lockUntilMs;
+  const inCooldownWindow = now < current.cooldownUntilMs;
+
+  if (isSameAction && (inLockWindow || inCooldownWindow)) {
+    const shouldHint = now - current.lastHintAtMs >= DUPLICATE_HINT_INTERVAL_MS;
+    if (shouldHint) {
+      current.lastHintAtMs = now;
+      userActionGuard.set(userId, current);
+    }
+
+    return { allowed: false, shouldHint };
+  }
+
+  userActionGuard.set(userId, {
+    actionKey,
+    lockUntilMs: now + ACTION_LOCK_TTL_MS,
+    cooldownUntilMs: 0,
+    lastHintAtMs: current.lastHintAtMs
+  });
+
+  return { allowed: true, shouldHint: false };
+}
+
+function releaseUserActionLock(userId, actionKey) {
+  const now = Date.now();
+  const current = userActionGuard.get(userId);
+
+  if (!current || current.actionKey !== actionKey) return;
+
+  userActionGuard.set(userId, {
+    ...current,
+    lockUntilMs: now,
+    cooldownUntilMs: now + ACTION_COOLDOWN_MS
+  });
+}
+
 function getPhotoGuard(userId) {
   return photoUploadGuard.get(userId) || { lastUploadAtMs: 0, isProcessing: false };
 }
@@ -1616,7 +1687,36 @@ exports.handler = async function(event, context) {
       // 開始計時
       globalMonitor.start(`event_${ev.type}_${userId}`);
 
+      const eventActionKey = ev.type === 'message' && ev.message?.type === 'text'
+        ? ev.message.text?.trim()
+        : ev.type === 'postback'
+          ? `postback:${String(ev.postback?.data || '')}`
+          : null;
+      const shouldGuardAction = Boolean(
+        userId && eventActionKey && (
+          isProtectedRapidAction(eventActionKey) || eventActionKey.startsWith('postback:')
+        )
+      );
+      let shouldReleaseActionLock = false;
+
       try {
+        if (shouldGuardAction) {
+          const guardResult = acquireUserActionLock(userId, eventActionKey);
+          if (!guardResult.allowed) {
+            if (guardResult.shouldHint && replyToken) {
+              await safeReply(replyToken, {
+                type: 'text',
+                text: '⏳ 已收到你的操作，系統正在處理中，請先不要連續點擊\n\n📋 可輸入「查詢進度」查看目前狀態'
+              });
+            }
+
+            globalMonitor.end(`event_${ev.type}_${userId}`);
+            return;
+          }
+
+          shouldReleaseActionLock = true;
+        }
+
         // 去重檢查
         const isUsed = await isReplyTokenUsed(replyToken);
         if (isUsed) {
@@ -1666,6 +1766,10 @@ exports.handler = async function(event, context) {
           type: 'text',
           text: '❌ 系統發生錯誤，請稍後再試'
         });
+      } finally {
+        if (shouldReleaseActionLock && userId && eventActionKey) {
+          releaseUserActionLock(userId, eventActionKey);
+        }
       }
     });
 
@@ -1948,9 +2052,9 @@ function generateStickerListFlexMessage(userId, sets, referralInfo = null, queue
         {
           type: 'action',
           action: {
-            type: 'uri',
-            label: '🎬 YouTuber推廣計畫',
-            uri: `${process.env.URL || 'https://sticker-tycoon.netlify.app'}/youtuber-promotion.html`
+            type: 'message',
+            label: '💰 購買張數',
+            text: '購買張數'
           }
         },
         {
@@ -1973,16 +2077,16 @@ function generateStickerListFlexMessage(userId, sets, referralInfo = null, queue
           type: 'action',
           action: {
             type: 'message',
-            label: '💰 購買張數',
-            text: '購買張數'
+            label: '🎁 分享給好友',
+            text: '分享給好友'
           }
         },
         {
           type: 'action',
           action: {
-            type: 'message',
-            label: '🎁 分享給好友',
-            text: '分享給好友'
+            type: 'uri',
+            label: '🎬 YouTuber推廣計畫',
+            uri: `${process.env.URL || 'https://sticker-tycoon.netlify.app'}/youtuber-promotion.html`
           }
         }
       ]
@@ -2122,10 +2226,10 @@ async function sendStickerCarousel(replyToken, set, stickers) {
   // 統一的 Quick Reply
   const quickReply = {
     items: [
+      { type: 'action', action: { type: 'message', label: '💰 購買張數', text: '購買張數' } },
       { type: 'action', action: { type: 'message', label: '🎁 分享給好友', text: '分享給好友' } },
       { type: 'action', action: { type: 'message', label: '📁 我的貼圖', text: '我的貼圖' } },
       { type: 'action', action: { type: 'message', label: '🎨 創建貼圖', text: '創建貼圖' } },
-      { type: 'action', action: { type: 'message', label: '💰 購買張數', text: '購買張數' } },
       {
         type: 'action',
         action: {
