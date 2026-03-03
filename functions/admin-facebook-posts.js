@@ -107,6 +107,7 @@ const TONES = [
 const CTA_STYLES = [
   { key: 'quick-launch', label: '🚀 爆量出圖（懶人專用）', description: '強調快速、省時、一鍵搞定' },
   { key: 'create-sticker', label: '🎨 創建貼圖（慢慢建立）', description: '強調客製化、創作樂趣、精心設計' },
+  { key: 'line-pay', label: '💳 LINE Pay 一條龍服務', description: '強調已正式接入 LINE Pay，付款更順暢' },
   { key: 'coupon', label: '🎫 優惠券兌換', description: '推廣優惠券活動，引導用戶兌換免費張數' },
   { key: 'fb-follow', label: '👍 關注 FB 享驚喜', description: '引導關注 Facebook 粉絲專頁，獲得獨家優惠' },
   { key: 'line', label: '引導加入官方帳號', description: '一般引導，加入 LINE 官方帳號' },
@@ -165,6 +166,18 @@ function buildPrompt({
 - 語氣要溫暖、強調創作樂趣、展現個性`;
     
     ctaGuidance = '引導用戶「加入官方帳號，輸入『創建貼圖』開始創作」';
+  } else if (ctaStyle === 'line-pay') {
+    specialFocus = `
+
+💳 **特別強調：LINE Pay 正式接入**
+這篇貼文要重點推廣「已正式接入 LINE Pay」的一條龍服務：
+- 強調「付款流程更順」、「官方機制」、「交易更安心」
+- 說明價值：從貼圖製作、張數購買到付款完成，流程更完整更流暢
+- 強調使用路徑：從 LINE 官方帳號進入操作，體驗最佳
+- 適合：想快速完成付款、降低操作門檻、追求完整服務體驗的用戶
+- 語氣要有信任感、清楚、避免誇大承諾`;
+
+    ctaGuidance = '引導用戶「加入 LINE 官方帳號，體驗已正式接入 LINE Pay 的一條龍服務」';
   } else if (ctaStyle === 'coupon') {
     specialFocus = `
 
@@ -246,7 +259,7 @@ async function generatePost(event) {
     tone: z.enum(TONES.map(t => t.key)).default('friendly'),
     topicKey: z.string().optional().nullable(),
     excludeTopicKeys: z.array(z.string()).optional().nullable(),
-    ctaStyle: z.enum(['comment', 'dm', 'link', 'line', 'quick-launch', 'create-sticker', 'coupon', 'fb-follow']).default('line')
+    ctaStyle: z.enum(['comment', 'dm', 'link', 'line', 'quick-launch', 'create-sticker', 'line-pay', 'coupon', 'fb-follow']).default('line')
   });
 
   const body = schema.parse(JSON.parse(event.body || '{}'));
