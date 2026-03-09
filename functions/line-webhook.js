@@ -69,7 +69,7 @@ async function startQuickLaunchAfterPhoto(userId) {
     const groupKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
     const masterSetData = {
-      name: '爆量出圖',
+      name: tempData.name || '爆量出圖',
       style: 'quick_launch_master',
       character: '',
       count: totalCount,  // ✅ 修正：設為 54 而不是 0
@@ -207,7 +207,7 @@ async function handleQuickLaunch(replyToken, userId, state) {
 
     // 隨機挑選參數（每一組都重新隨機一次）改為：建立 1 個 master 任務，交給 worker 依序跑 3 組
     const masterSetData = {
-      name: '爆量出圖',
+      name: tempData.name || '爆量出圖',
       style: 'quick_launch_master',
       character: '',
       count: totalCount,  // ✅ 修正：設為 54 而不是 0

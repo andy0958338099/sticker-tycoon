@@ -223,7 +223,8 @@ async function executeQuickLaunch(taskId, masterSetId) {
 
       const expressions = shuffleArray(expressionPool).slice(0, setSize);
 
-      const setName = `爆量出圖-${String(i + 1).padStart(2, '0')}`;
+      const baseName = (masterSet.name && String(masterSet.name).trim()) || '爆量出圖';
+      const setName = `${baseName}-${String(i + 1).padStart(2, '0')}`;
 
       const childSetId = uuidv4();
 
