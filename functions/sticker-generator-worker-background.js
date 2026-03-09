@@ -802,9 +802,31 @@ exports.handler = async function(event, context) {
         result = await executeGeneration(taskId, setId);
       }
     } catch (routeError) {
-      console.error('❌ 判斷任務類型失敗，改用預設生成流程:', routeError.message);
+      console.error('❌ 判斷任務類型失敗，嘗試以貼圖組風格判斷流程:', routeError.message);
       console.error('❌ 錯誤詳情:', routeError);
-      result = await executeGeneration(taskId, setId);
+
+      // 防呆：若任務類型查詢失敗，仍要避免 quick_launch master 誤走一般生成流程
+      try {
+        const { data: setRow, error: setQueryError } = await getSupabaseClient()
+          .from('sticker_sets')
+          .select('style')
+          .eq('set_id', setId)
+          .single();
+
+        if (setQueryError) {
+          console.error('❌ 查詢貼圖組風格失敗，改用預設流程:', setQueryError.message);
+          result = await executeGeneration(taskId, setId);
+        } else if (setRow && setRow.style === 'quick_launch_master') {
+          console.log('🚀 依貼圖組風格判斷為 quick_launch_master，執行爆量出圖流程');
+          result = await executeQuickLaunch(taskId, setId);
+        } else {
+          console.log('📝 非 quick_launch_master，執行預設生成流程');
+          result = await executeGeneration(taskId, setId);
+        }
+      } catch (fallbackError) {
+        console.error('❌ 風格判斷 fallback 失敗，改用預設生成流程:', fallbackError.message);
+        result = await executeGeneration(taskId, setId);
+      }
     }
 
     // 記錄完成（不 Push 通知）
