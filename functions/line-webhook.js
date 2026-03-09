@@ -37,8 +37,11 @@ function pickRandomFromArray(items) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
+// 快速啟動（使用者上傳照片後）
+// 目的：在條件符合時自動建立「爆量出圖」主任務，交由背景 worker 依序處理。
 async function startQuickLaunchAfterPhoto(userId) {
   try {
+    // 讀取目前對話狀態，必須包含已上傳照片資訊
     const state = await getConversationState(userId);
 
     const tempData = state?.temp_data || {};
@@ -125,6 +128,8 @@ async function startQuickLaunchAfterPhoto(userId) {
   }
 }
 
+// 處理使用者手動觸發「爆量出圖」的入口。
+// 流程：防重入 -> 前置檢查（照片/進行中任務/張數）-> 先回覆使用者 -> 建立任務並觸發背景 worker。
 async function handleQuickLaunch(replyToken, userId, state) {
   // 防連點（最佳努力）
   const QUICK_LAUNCH_LOCK_TTL_MS = 30_000;
