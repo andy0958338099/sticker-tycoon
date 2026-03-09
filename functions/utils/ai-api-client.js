@@ -175,13 +175,9 @@ async function callChatWithFallback(messages, options = {}) {
 
   let lastError = null;
 
-  const contents = messagesToContents(messages);
-
-  // 重要：你的 log 顯示有時候會明確要求 messages（field messages is required）
-  // 因此預設先試 messages，再試 contents。
+  // 供應商端目前要求使用 messages；禁用 contents 以避免固定 500 噪音與無效重試
   const requestBodyCandidates = [
-    { kind: 'messages', build: modelName => ({ model: modelName, messages, max_tokens: maxTokens }) },
-    { kind: 'contents', build: modelName => ({ model: modelName, contents, max_tokens: maxTokens }) }
+    { kind: 'messages', build: modelName => ({ model: modelName, messages, max_tokens: maxTokens }) }
   ];
 
   for (const model of models) {
