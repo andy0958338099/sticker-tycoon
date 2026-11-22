@@ -56,7 +56,10 @@ describe('cache-manager.js', () => {
     });
 
     it('應該處理不存在的 key', () => {
-      expect(cache.get('nonexistent')).toBeUndefined();
+      // get() 對不存在的 key 回 null（不是 undefined）。
+      // 這是模組的既定契約：getOrSet() 用 `cached !== null` 判斷是否存在，
+      // 改成 undefined 會讓那個判斷失效。
+      expect(cache.get('nonexistent')).toBeNull();
     });
 
     it('應該能夠存儲不同類型的值', () => {
@@ -92,7 +95,8 @@ describe('cache-manager.js', () => {
       expect(shortCache.get('key1')).toBe('value1');
 
       setTimeout(() => {
-        expect(shortCache.get('key1')).toBeUndefined();
+        // 過期後 get() 回 null（模組契約，見上方說明）
+        expect(shortCache.get('key1')).toBeNull();
         done();
       }, 150);
     }, 300);

@@ -88,7 +88,21 @@ describe('logger.js', () => {
 
   describe('logDebug', () => {
     it('應該記錄調試訊息', () => {
-      logDebug('Debug message');
+      // logger 的 LOG_LEVEL 在模組載入時讀取（預設 INFO → 會擋掉 DEBUG）。
+      // 用 jest.isolateModules 重新載入並指定 LOG_LEVEL=debug，
+      // 才能真正驗到 DEBUG 等級會輸出。
+      //
+      // ⚠️ 這也驗證了 logger.js 的一個真實 bug：原本用 `||` 取預設值，
+      //    而 LOG_LEVELS.DEBUG = 0 是 falsy → DEBUG 永遠開不起來。已改用 `??`。
+      let debugLogger;
+      jest.isolateModules(() => {
+        process.env.LOG_LEVEL = 'debug';
+        debugLogger = require('../../utils/logger');
+      });
+      delete process.env.LOG_LEVEL;
+
+      consoleLogSpy.mockClear();
+      debugLogger.logDebug('Debug message');
       expect(consoleLogSpy).toHaveBeenCalled();
     });
 

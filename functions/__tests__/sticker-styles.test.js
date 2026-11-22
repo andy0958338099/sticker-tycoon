@@ -305,7 +305,10 @@ describe('sticker-styles.js', () => {
     });
 
     test('應該有正確的有效數量', () => {
-      expect(LineStickerSpecs.validCounts).toEqual([4, 8, 12]);
+      // 6 宮格批次生成優化後的數量（每 6 張 = 1 次 API 呼叫）。
+      // 這是刻意的產品決策，不是 LINE 官方規格 —— LINE 官方允許 40 張，
+      // 但這裡限制的是「單次生成的批次張數」。
+      expect(LineStickerSpecs.validCounts).toEqual([6, 12, 18]);
     });
 
     test('應該有正確的檔案大小限制', () => {

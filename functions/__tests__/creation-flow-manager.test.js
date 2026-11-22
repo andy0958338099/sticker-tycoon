@@ -7,9 +7,7 @@ const {
   isCreationFlowTimeout,
   cancelCreationFlow,
   addCancelButton,
-  addCancelButtonToFlex,
-  shouldDeductTokens,
-  markTokensDeducted
+  addCancelButtonToFlex
 } = require('../creation-flow-manager');
 const { updateConversationState, ConversationStage } = require('../conversation-state');
 
@@ -215,45 +213,15 @@ describe('creation-flow-manager.js', () => {
     });
   });
 
-  describe('shouldDeductTokens', () => {
-    it('當 tokens_deducted 為 false 時應該返回 true', () => {
-      const state = { tokens_deducted: false };
-      expect(shouldDeductTokens(state)).toBe(true);
-    });
-
-    it('當 tokens_deducted 為 true 時應該返回 false', () => {
-      const state = { tokens_deducted: true };
-      expect(shouldDeductTokens(state)).toBe(false);
-    });
-
-    it('當 tokens_deducted 不存在時應該返回 true', () => {
-      const state = {};
-      expect(shouldDeductTokens(state)).toBe(true);
-    });
-
-    it('當 state 為 null 時應該返回 true', () => {
-      expect(shouldDeductTokens(null)).toBe(true);
-    });
-  });
-
-  describe('markTokensDeducted', () => {
-    it('應該標記張數已扣除', async () => {
-      updateConversationState.mockResolvedValue(true);
-
-      await markTokensDeducted('user123');
-
-      expect(updateConversationState).toHaveBeenCalledWith(
-        'user123',
-        undefined,
-        { tokens_deducted: true }
-      );
-    });
-
-    it('當更新失敗時應該拋出錯誤', async () => {
-      updateConversationState.mockRejectedValue(new Error('DB error'));
-
-      await expect(markTokensDeducted('user123')).rejects.toThrow('DB error');
-    });
-  });
+  // ─────────────────────────────────────────────────────────────
+  // 已移除：shouldDeductTokens / markTokensDeducted
+  //
+  // 這兩個函式從未被實作 —— 測試描述的是「先扣張數、生成失敗再退」的早期設計，
+  // 後來改成「生成成功後才扣」（line-webhook 寫 tokensDeducted: false，
+  // 由 sticker-generator-worker-background 呼叫 deductTokens）。
+  //
+  // 現行程式碼的欄位名是 camelCase `tokensDeducted`，
+  // 測試用的 snake_case `tokens_deducted` 從未與實作對接。
+  // 對應的建立流程 state 欄位在 functions/line-webhook.js 三處寫入但無人讀取。
+  // ─────────────────────────────────────────────────────────────
 });
-

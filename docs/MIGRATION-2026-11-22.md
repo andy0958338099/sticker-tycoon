@@ -49,15 +49,73 @@
 測試數從 265 → 289：原本的 `node_modules` 是從舊環境複製的，
 `sharp` 缺 darwin-arm64 二進位，導致部分測試沒被收集到。重裝後多 24 個能跑。
 
-**失敗的 6 個 suite 與搬遷前完全相同**，是既有技術債 —— 程式碼重構過但測試沒同步：
+**失敗的 6 個 suite 與搬遷前完全相同**，是既有技術債 —— 程式碼重構過但測試沒同步。
+逐一支解後，性質分成**三類**：
 
-| 測試 | 期望的 API | 程式實際匯出 |
-|---|---|---|
-| `utils/logger.test.js` | `log` `logError` `logInfo` `logWarn` `logDebug` `logSuccess` | `debug` `info` `warn` `error` `success` `logExecutionTime` `createUserLogger` |
-| `utils/cache-manager.test.js` | `createCache` `cacheMiddleware` `clearAllCaches` | `CacheManager` `globalCache` |
-| `ai-generator` / `image-processor` / `sticker-styles` / `creation-flow-manager` | — | 需個別確認 |
+### (a) 測試對著不存在的 API（2 個 suite）
 
-對應的重構 commit：`72c1f71`（logger）、`7c37f68`（cache-manager）。
+| 測試 | 測試期待的匯出 | 程式實際匯出 | 性質 |
+|---|---|---|---|
+| `utils/logger.test.js` | `log` `logError` `logInfo` `logWarn` `logDebug` `logSuccess` | `debug` `info` `warn` `error` `success` `logExecutionTime` `createUserLogger` | 測試過時 |
+| `utils/cache-manager.test.js` | `createCache` `cacheMiddleware` `clearAllCaches` | `CacheManager` `globalCache` | 測試過時 |
+
+重構 commit：`72c1f71`（logger）、`7c37f68`（cache-manager）。
+**正式程式碼用的是新 API**（`rate-limiter.js`、`response-handler.js`、`command-service.js`
+都呼叫 `logger.warn` / `logger.debug`），與重構後一致 → 程式沒問題，是測試沒跟上。
+
+### (b) 測試對著從未實作的 API（1 個 suite）
+
+`creation-flow-manager.test.js` 期待 `shouldDeductTokens` / `markTokensDeducted`，
+但 `functions/creation-flow-manager.js` 的 `module.exports`（第 156 行）只有：
+
+```
+CREATION_TIMEOUT_MS, isCreationFlowTimeout, cancelCreationFlow,
+addCancelButton, addCancelButtonToFlex, checkAndHandleTimeout, handleCancelCommand
+```
+
+**這兩個函式從未被實作**。實際的扣張邏輯是 `supabase-client.js` 的 `deductTokens`，
+在 `pack-for-line.js:120`、`sticker-generator-worker-background.js:500`、
+`submit-for-listing.js:69` 都被正常使用。
+→ 這是**測試寫了不存在的功能**，不是程式缺陷。
+
+### (c) 其餘 3 個 suite：斷言過時，程式沒問題
+
+| 測試 | 失敗原因 |
+|---|---|
+| `ai-generator.test.js` | 期待預設 model `"gemini-2.5-flash-image"`，實際讀到 `"test-model"`（測試的 mock 值）；另有 retry 邏輯的斷言不符 |
+| `sticker-styles.test.js` | `LineStickerSpecs` 的「有效數量」斷言不符（預期與實際差 2 筆）—— 匯出的函式名稱全部存在，不是 API 問題 |
+| `image-processor.test.js` | 斷言與實作不符 |
+
+**共同點：測試斷言寫於重構之前，程式碼演進後沒回頭更新測試。**
+
+### 總結
+
+6 個失敗 suite **全部是測試端問題，沒有任何一個是正式程式碼的缺陷**：
+- (a) 2 個對著舊 API 名稱
+- (b) 1 個對著從未實作的函式
+- (c) 3 個斷言過時
+
+正式程式碼使用的 API 全部與實作一致（`logger.warn` / `deductTokens` / `generateStickerPromptV2` 等）。
+修法是**更新測試**（把測試對齊重構後的實作），不是改程式碼。
+
+### 額外發現：模組載入即連線
+
+`functions/conversation-state.js` 第 6 行 `require('./supabase-client')`，
+而 `supabase-client.js` 第 1158 行是 `get supabase()` getter —— **載入模組就會建立
+Supabase client，缺憑證直接 throw**。
+
+連帶影響：`require('./functions/line-webhook.js')` 在缺 `SUPABASE_URL` +
+`SUPABASE_SERVICE_ROLE_KEY` 時會直接失敗（第 8 行就 require 了它），
+且因為是 getter 拋錯，症狀表現為「require 卡住」而非明確錯誤訊息。
+
+→ **要能繼續開發，Supabase 憑證是第一道門檻**，不是可選項。
+
+## 3.5 另一個搬遷相關的事
+
+原始目錄的 `node_modules` 是從舊環境複製的，`sharp` 缺 darwin-arm64 二進位，
+`require('sharp')` 直接拋 `Could not load the "sharp" module using the darwin-arm64 runtime`。
+`npm ci` 重裝後恢復正常（libvips 8.17.3）。
+→ 以後搬移專案**不要複製 `node_modules`**，一律重裝。
 
 ## 4. 舊站台狀況
 

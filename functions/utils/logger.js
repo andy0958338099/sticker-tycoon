@@ -10,7 +10,14 @@ const LOG_LEVELS = {
   ERROR: 3,
 };
 
-const CURRENT_LOG_LEVEL = LOG_LEVELS[process.env.LOG_LEVEL?.toUpperCase()] || LOG_LEVELS.INFO;
+// ⚠️ 這裡必須用 ?? 而不是 ||
+//
+// LOG_LEVELS.DEBUG = 0，而 0 是 falsy —— 用 `||` 會讓 DEBUG 等級永遠被
+// 判成「沒設定」而落到 INFO，導致 logDebug() 永遠不輸出。
+// DEBUG 是合法且有用的等級（開發時開 LOG_LEVEL=debug 應生效），所以用 ??。
+const CURRENT_LOG_LEVEL =
+  LOG_LEVELS[process.env.LOG_LEVEL?.toUpperCase()] ?? LOG_LEVELS.INFO;
+
 
 /**
  * 格式化日誌訊息
@@ -88,6 +95,61 @@ function createUserLogger(userId) {
   };
 }
 
+/**
+ * 相容 API（早期版本的名稱）
+ *
+ * 舊版模組提供 `log` / `logError` / `logInfo` / `logWarn` / `logDebug` / `logSuccess`，
+ * 重構後改名為 `info` / `error` / `warn` / `debug` / `success`。
+ * 既有測試與部分呼叫端仍用舊名稱 → 保留別名，兩套都能用。
+ *
+ * 舊的 `log()` 接受多個參數並把 Error 物件轉成訊息；
+ * 新的 `info(message, meta)` 只收兩個參數 → 這層別名做轉換。
+ */
+
+/** 舊 log() 的多參數／Error 物件相容處理 */
+function log(...args) {
+  const [message, meta] = normalizeArgs(args);
+  info(message, meta);
+}
+
+/** 把 Error 物件轉成可讀訊息，其餘參數併入 meta */
+function normalizeArgs(args) {
+  const [first, ...rest] = args;
+
+  if (first instanceof Error) {
+    return [first.message, { error: first.message, stack: first.stack, ...rest[0] }];
+  }
+  if (rest.length === 0) {
+    return [first, {}];
+  }
+  if (rest.length === 1 && rest[0] && typeof rest[0] === 'object' && !(rest[0] instanceof Error)) {
+    return [first, rest[0]];
+  }
+  // 多個純值參數 → 併成 meta.args
+  return [first, { args: rest }];
+}
+
+const logError = (...args) => {
+  const [message, meta] = normalizeArgs(args);
+  error(message, meta);
+};
+const logInfo = (...args) => {
+  const [message, meta] = normalizeArgs(args);
+  info(message, meta);
+};
+const logWarn = (...args) => {
+  const [message, meta] = normalizeArgs(args);
+  warn(message, meta);
+};
+const logDebug = (...args) => {
+  const [message, meta] = normalizeArgs(args);
+  debug(message, meta);
+};
+const logSuccess = (...args) => {
+  const [message, meta] = normalizeArgs(args);
+  success(message, meta);
+};
+
 module.exports = {
   debug,
   info,
@@ -97,5 +159,12 @@ module.exports = {
   logExecutionTime,
   createUserLogger,
   LOG_LEVELS,
+  // 相容別名
+  log,
+  logError,
+  logInfo,
+  logWarn,
+  logDebug,
+  logSuccess,
 };
 

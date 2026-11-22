@@ -58,6 +58,26 @@ class CacheManager {
   }
 
   /**
+   * 檢查 key 是否存在（且未過期）
+   *
+   * 過期的項目視為不存在，並順手清掉 —— 避免髒資料留在 map 裡。
+   */
+  has(key) {
+    const item = this.cache.get(key);
+
+    if (!item) {
+      return false;
+    }
+
+    if (Date.now() > item.expireAt) {
+      this.cache.delete(key);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * 刪除快取
    */
   delete(key) {
@@ -153,8 +173,79 @@ const globalCache = new CacheManager({
   maxSize: 1000
 });
 
+/**
+ * 追蹤 createCache 建立的實例，讓 clearAllCaches 能清乾淨
+ * （必須宣告在 createCache 之前 —— 否則 TDZ 錯誤）
+ */
+const namedCaches = new Set();
+
+/**
+ * 建立具名的快取實例（相容 API）
+ *
+ * 早期版本的模組用「工廠函式 + 名稱」管理多個快取，
+ * 重構後改成單例 `globalCache` + `CacheManager` 類別，
+ * 但既有測試與部分呼叫端仍用舊介面 → 保留這層相容。
+ *
+ * @param {string} name 快取名稱（僅供識別／除錯）
+ * @param {Object} options { ttl, max } → 對應 defaultTTL / maxSize
+ */
+function createCache(name = 'default', options = {}) {
+  const cache = new CacheManager({
+    defaultTTL: options.ttl ?? options.defaultTTL,
+    maxSize: options.max ?? options.maxSize
+  });
+  cache.name = name;
+  namedCaches.add(cache);
+  return cache;
+}
+
+/**
+ * 清空所有由 createCache 建立的快取（相容 API）
+ *
+ * 測試隔離用：每個測試結束後呼叫，確保下一個測試拿到乾淨狀態。
+ */
+function clearAllCaches() {
+  namedCaches.forEach((cache) => cache.clear());
+  namedCaches.clear();
+}
+
+/**
+ * 快取中介層（相容 API）
+ *
+ * 測試把它當「函式」使用（middleware(req, res, next)），
+ * 但同時也期待有 get/set/has/delete/clear 方法 →
+ * 回傳一個「可呼叫物件」：函式本體帶有這些方法。
+ *
+ * @param {string} prefix 快取鍵前綴
+ */
+function cacheMiddleware(prefix = '') {
+  const key = (k) => (prefix ? `${prefix}:${k}` : k);
+
+  const middleware = (req, res, next) => {
+    // Express 風格的中介層：把快取讀寫掛到 req/res 上
+    if (req && typeof req === 'object') {
+      req.cacheKey = key(req.url || req.path || 'default');
+    }
+    if (typeof next === 'function') {
+      next();
+    }
+    return middleware;
+  };
+
+  middleware.get = (k) => globalCache.get(key(k));
+  middleware.set = (k, v, ttl) => globalCache.set(key(k), v, ttl);
+  middleware.has = (k) => globalCache.has(key(k));
+  middleware.delete = (k) => globalCache.delete(key(k));
+  middleware.clear = () => globalCache.clear();
+
+  return middleware;
+}
+
 module.exports = {
   CacheManager,
-  globalCache
+  globalCache,
+  createCache,
+  cacheMiddleware,
+  clearAllCaches
 };
 
