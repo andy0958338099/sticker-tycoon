@@ -41,62 +41,58 @@
 
 ## 3. 測試現況
 
-| 位置 | 結果 |
-|---|---|
-| 原始目錄（搬遷前對照組） | 265 個測試，214 通過，51 失敗 |
-| 新位置（重裝依賴後） | **289 個測試，236 通過，53 失敗** |
+### 最終結果
 
-測試數從 265 → 289：原本的 `node_modules` 是從舊環境複製的，
-`sharp` 缺 darwin-arm64 二進位，導致部分測試沒被收集到。重裝後多 24 個能跑。
+| 階段 | 測試總數 | 通過 | 失敗 | suite |
+|---|---|---|---|---|
+| 原始目錄（搬遷前對照組） | 265 | 214 | 51 | 6 失敗 / 8 通過 |
+| 搬遷後（重裝依賴） | 289 | 236 | 53 | 6 失敗 / 8 通過 |
+| **修完技術債** | **283** | **283** | **0** | **14 全通過** |
 
-**失敗的 6 個 suite 與搬遷前完全相同**，是既有技術債 —— 程式碼重構過但測試沒同步。
-逐一支解後，性質分成**三類**：
+測試數 265 → 289：原本的 `node_modules` 是從舊環境複製的，`sharp` 缺 darwin-arm64
+二進位，導致部分測試沒被收集到。`npm ci` 重裝後恢復。
+→ **搬移專案不要複製 `node_modules`，一律重裝。**
 
-### (a) 測試對著不存在的 API（2 個 suite）
+### 修了 51 個失敗測試，同時修出 2 個真實缺陷
 
-| 測試 | 測試期待的匯出 | 程式實際匯出 | 性質 |
-|---|---|---|---|
-| `utils/logger.test.js` | `log` `logError` `logInfo` `logWarn` `logDebug` `logSuccess` | `debug` `info` `warn` `error` `success` `logExecutionTime` `createUserLogger` | 測試過時 |
-| `utils/cache-manager.test.js` | `createCache` `cacheMiddleware` `clearAllCaches` | `CacheManager` `globalCache` | 測試過時 |
+#### 真實缺陷 1：`LOG_LEVEL=debug` 永遠開不起來
 
-重構 commit：`72c1f71`（logger）、`7c37f68`（cache-manager）。
-**正式程式碼用的是新 API**（`rate-limiter.js`、`response-handler.js`、`command-service.js`
-都呼叫 `logger.warn` / `logger.debug`），與重構後一致 → 程式沒問題，是測試沒跟上。
-
-### (b) 測試對著從未實作的 API（1 個 suite）
-
-`creation-flow-manager.test.js` 期待 `shouldDeductTokens` / `markTokensDeducted`，
-但 `functions/creation-flow-manager.js` 的 `module.exports`（第 156 行）只有：
-
-```
-CREATION_TIMEOUT_MS, isCreationFlowTimeout, cancelCreationFlow,
-addCancelButton, addCancelButtonToFlex, checkAndHandleTimeout, handleCancelCommand
+```js
+// functions/utils/logger.js（修前）
+const CURRENT_LOG_LEVEL = LOG_LEVELS[process.env.LOG_LEVEL?.toUpperCase()] || LOG_LEVELS.INFO;
 ```
 
-**這兩個函式從未被實作**。實際的扣張邏輯是 `supabase-client.js` 的 `deductTokens`，
-在 `pack-for-line.js:120`、`sticker-generator-worker-background.js:500`、
-`submit-for-listing.js:69` 都被正常使用。
-→ 這是**測試寫了不存在的功能**，不是程式缺陷。
+`LOG_LEVELS.DEBUG = 0`，而 `0` 是 falsy → `||` 判定成「沒設定」而落到 INFO。
+**結果：開發時設 `LOG_LEVEL=debug` 完全沒效果，debug log 永遠不輸出。**
+改用 `??`。驗證：debug/info/warn/error 四級各輸出 5/4/3/2 則（success 恆輸出），
+修前 `debug` 級會錯誤地只輸出 4 則。
 
-### (c) 其餘 3 個 suite：斷言過時，程式沒問題
+#### 真實缺陷 2：`CacheManager` 缺 `has()` 方法
 
-| 測試 | 失敗原因 |
-|---|---|
-| `ai-generator.test.js` | 期待預設 model `"gemini-2.5-flash-image"`，實際讀到 `"test-model"`（測試的 mock 值）；另有 retry 邏輯的斷言不符 |
-| `sticker-styles.test.js` | `LineStickerSpecs` 的「有效數量」斷言不符（預期與實際差 2 筆）—— 匯出的函式名稱全部存在，不是 API 問題 |
-| `image-processor.test.js` | 斷言與實作不符 |
+有 `get`/`set`/`delete`/`clear` 但沒有 `has()`。新增，含 TTL 過期處理
+（過期視為不存在並順手清掉髒資料）。
 
-**共同點：測試斷言寫於重構之前，程式碼演進後沒回頭更新測試。**
+#### 相容 API（重構遺留）
 
-### 總結
+| 模組 | 加回的相容 API | 原因 |
+|---|---|---|
+| `utils/logger.js` | `log` `logError` `logInfo` `logWarn` `logDebug` `logSuccess` | 舊版名稱；重構後改名為 `info`/`error`/`warn`/`debug`/`success`。舊 `log()` 支援多參數與 Error 物件，別名層做轉換 |
+| `utils/cache-manager.js` | `createCache` `cacheMiddleware` `clearAllCaches` | 舊版工廠函式介面；重構後改成 `globalCache` 單例 + `CacheManager` 類別 |
 
-6 個失敗 suite **全部是測試端問題，沒有任何一個是正式程式碼的缺陷**：
-- (a) 2 個對著舊 API 名稱
-- (b) 1 個對著從未實作的函式
-- (c) 3 個斷言過時
+#### 測試端的修正（6 個 suite）
 
-正式程式碼使用的 API 全部與實作一致（`logger.warn` / `deductTokens` / `generateStickerPromptV2` 等）。
-修法是**更新測試**（把測試對齊重構後的實作），不是改程式碼。
+| 測試 | 問題 | 修法 |
+|---|---|---|
+| `creation-flow-manager` | 期待 `shouldDeductTokens` / `markTokensDeducted` —— **這兩個函式從未被實作** | 刪除測試。測試描述的是「先扣張數、失敗再退」的早期設計，後來改成「生成成功後才扣」；且測試用 snake_case `tokens_deducted`，程式碼用 camelCase `tokensDeducted`，從未對接 |
+| `utils/cache-manager` | 期待 `get()` 回 `undefined` | 改測試。模組既定契約是回 `null`（`getOrSet` 用 `cached !== null` 判斷），改成 undefined 會讓該判斷失效 |
+| `ai-generator`（model 名稱） | 讀 `process.env.AI_MODEL`，但 `setup.js` 全域設了 `'test-model'` | 改驗 fallback 邏輯本身 |
+| `ai-generator`（重試） | 只呼叫一次 `axios.post` 卻期待 resolve | 改測真正的重試迴圈 `generateStickerImage(style, characterDescription, expression)` |
+| `ai-generator`（mock） | `jest.mock('../sticker-styles')` 自動 mock 讓 `generateStickerPrompt` 回 undefined → 走不到 axios | 改用 `jest.requireActual` 保留該純函式的真實實作 |
+| `ai-generator`（mock 時機） | `clearMocks: true` 會清掉 `jest.fn()` 的實作（回 undefined） | mock 必須在 `beforeEach` 設定，不能只放 `it` 內 |
+| `sticker-styles` | 期待 `validCounts` 為 `[4,8,12]`，實際 `[6,12,18]` | 改測試。6 宮格批次生成優化是刻意的產品決策（每 6 張 = 1 次 API），不是 LINE 官方規格 |
+
+**結論：6 個失敗 suite 全部是測試端問題，沒有任何一個是正式程式碼的缺陷。**
+（但修測試的過程中找出了上面那 2 個真實缺陷。）
 
 ### 額外發現：模組載入即連線
 
